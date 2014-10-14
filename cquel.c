@@ -13,7 +13,47 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <my_global.h>
+
 #include "cquel.h"
+
+struct dbconn cq_new_connection(const char *host, const char *user,
+        const char *passwd, const char *database)
+{
+    struct dbconn out = {
+        .host = host,
+        .user = user,
+        .passwd = passwd,
+        .database = database
+    };
+    return out;
+}
+
+int cq_connect(struct dbconn *con)
+{
+    con->con = mysql_init(NULL);
+
+    if (mysql_real_connect(con->con, con->host, con->user, con->passwd,
+            con->database, 0, NULL, CLIENT_MULTI_STATEMENTS) == NULL) {
+        return 1;
+    }
+
+    return 0;
+}
+
+void cq_close_connection(struct dbconn *con)
+{
+    mysql_close(con->con);
+}
+
+int cq_test(struct dbconn con)
+{
+    int rc;
+
+    rc = cq_connect(&con);
+    cq_close_connection(&con);
+    return rc;
+}
 
 struct drow *cq_new_drow(size_t fieldc)
 {

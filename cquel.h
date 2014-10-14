@@ -34,13 +34,6 @@ struct dbconn {
     const char *database;
 };
 
-struct dbconn cq_new_connection(const char *host, const char *user,
-        const char *passwd, const char *database);
-
-int cq_connect(struct dbconn *con);
-void cq_close_connection(struct dbconn *con);
-int cq_test(struct dbconn *con);
-
 struct drow {
     size_t fieldc;
     char **values;
@@ -60,6 +53,13 @@ struct dlist {
     struct drow *first;
     struct drow *last;
 };
+
+struct dbconn cq_new_connection(const char *host, const char *user,
+        const char *passwd, const char *database);
+
+int cq_connect(struct dbconn *con);
+void cq_close_connection(struct dbconn *con);
+int cq_test(struct dbconn con);
 
 struct dlist *cq_new_dlist(size_t fieldc, const char **fieldnames);
 size_t cq_dlist_size(const struct dlist *list);
