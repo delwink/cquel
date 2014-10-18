@@ -39,7 +39,7 @@ struct dlist *mylist = cq_new_dlist(4, tabledata);
 struct drow *rms = cq_new_drow(4);
 cq_drow_set(rms, rmsdata); /* set this row to have the values from rmsdata */
 
-cq_dlist_add(mylist, rms);
+cq_dlist_add(mylist, rms); /* add our row to the list */
 ```
 
 With that set up, now we can insert.
