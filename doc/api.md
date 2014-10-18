@@ -35,11 +35,11 @@ rmsdata\[1\] = u8"Matthew";
 rmsdata\[2\] = u8"Stallman";
 rmsdata\[3\] = u8"1953-03-16";
 
-struct dlist *mylist = cq_new_dlist(4, tabledata);
-struct drow *rms = cq_new_drow(4);
-cq_drow_set(rms, rmsdata);
+struct dlist *mylist = cq\_new\_dlist(4, tabledata);
+struct drow *rms = cq\_new\_drow(4);
+cq\_drow\_set(rms, rmsdata);
 
-cq_dlist_add(mylist, rms);
+cq\_dlist\_add(mylist, rms);
 ```
 
 With that set up, now we can insert. Keep in mind, the insert function can
@@ -47,7 +47,6 @@ return an error code, but for the sake of brevity, exception handling is
 omitted from this document. It would return nonzero to indicate an error.
 
 ``` c
-cq_connect(&mydb);
 cq_insert(*mydb, u8"Person", mylist);
 ```
 
@@ -63,8 +62,7 @@ query for each row, allowing you to mass-insert.
 Finally, we must clean up.
 
 ``` c
-cq_close_connection(&mydb);
-cq_free_dlist(mylist);
+cq\_free\_dlist(mylist);
 ```
 
 The above function frees all the nodes in the list as well, so be sure not to
