@@ -66,8 +66,8 @@ cq_free_dlist(mylist);
 ```
 
 The above function frees all the nodes in the list as well, so be sure not to
-use them elsewhere without copying the memory. It does NOT, however, free any
-memory allocated to the string values stored in each `struct drow`. You must
+use them elsewhere without copying the memory. It does **NOT**, however, free 
+any memory allocated to the string values stored in each `struct drow`. You must
 free this memory separately.
 
 [1]: structures.md
