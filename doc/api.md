@@ -42,13 +42,12 @@ cq_drow_set(rms, rmsdata);
 cq_dlist_add(mylist, rms);
 ```
 
-With that set up, now we can insert. Keep in mind, the insert function can
-return an error code, but for the sake of brevity, exception handling is
-omitted from this document. It would return nonzero to indicate an error.
+With that set up, now we can insert.
 
 ``` c
-cq_connect(&mydb);
-cq_insert(*mydb, u8"Person", mylist);
+if (cq_insert(*mydb, u8"Person", mylist)) {
+    /* handle errors */
+}
 ```
 
 That function would send the following query to the database:
@@ -63,7 +62,6 @@ query for each row, allowing you to mass-insert.
 Finally, we must clean up.
 
 ``` c
-cq_close_connection(&mydb);
 cq_free_dlist(mylist);
 ```
 
