@@ -37,7 +37,7 @@ rmsdata[3] = u8"1953-03-16";
 
 struct dlist *mylist = cq_new_dlist(4, tabledata);
 struct drow *rms = cq_new_drow(4);
-cq_drow_set(rms, rmsdata);
+cq_drow_set(rms, rmsdata); /* set this row to have the values from rmsdata */
 
 cq_dlist_add(mylist, rms);
 ```
