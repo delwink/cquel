@@ -23,13 +23,13 @@ Let's assume we have a table `Person` in `mydb`, and the fields (excluding the
 primary key) are `first`, `middle`, `last`, and `dob` (date of birth).
 
 ``` c
-char tabledata[4][64];
+char *tabledata[4];
 tabledata[0] = u8"first";
 tabledata[1] = u8"middle";
 tabledata[2] = u8"last";
 tabledata[3] = u8"dob";
 
-char rmsdata[4][64];
+char *rmsdata[4];
 rmsdata[0] = u8"Richard";
 rmsdata[1] = u8"Matthew";
 rmsdata[2] = u8"Stallman";
