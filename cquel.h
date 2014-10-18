@@ -16,7 +16,6 @@
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
 
-#include <stdlib.h>
 #include <mysql.h>
 
 #ifdef __cplusplus
@@ -69,7 +68,7 @@ void cq_dlist_remove(struct dlist *list, struct drow *row);
 struct drow *cq_dlist_at(struct dlist *list, size_t index);
 
 int cq_insert(struct dbconn con, const char *table, struct dlist *list);
-int cq_update(struct dbconn con, const char *table, struct dlist *list
+int cq_update(struct dbconn con, const char *table, struct dlist *list,
         const char *conditions);
 
 int cq_select(struct dbconn con, const char *table, struct dlist *out,

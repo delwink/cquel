@@ -14,8 +14,65 @@
  */
 
 #include <my_global.h>
+#include <string.h>
+#include <unicode/ustdio.h>
+#include <unicode/ustring.h>
 
 #include "cquel.h"
+
+int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
+        const char **fieldnames)
+{
+    UChar *buf16 = calloc(buflen, sizeof(UChar));
+    UErrorCode status = U_ZERO_ERROR;
+    size_t num_left = fieldc;
+    int rc = 0;
+    if (buf16 == NULL)
+        return -1;
+
+    if (num_left == 0)
+        return 1;
+
+    for (size_t i = 0; i < fieldc; ++i) {
+        UChar *temp = calloc(buflen, sizeof(UChar));
+        if (temp == NULL) {
+            rc = -1;
+            break;
+        }
+
+        u_strFromUTF8(temp, buflen, NULL, fieldnames[i], strlen(fieldnames[i]),
+                &status);
+        if (!U_SUCCESS(status)) {
+            rc = 2;
+            free(temp);
+            break;
+        }
+
+        u_strcat(buf16, temp);
+        free(temp);
+        if (--num_left > 0) {
+            u_strcat(buf16, u",");
+        }
+    }
+
+    u_strToUTF8(buf, buflen, NULL, buf16, u_strlen(buf16), &status);
+    if (!U_SUCCESS(status))
+        rc = 3;
+
+    free(buf16);
+    return rc;
+}
+
+int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list)
+{
+    return cq_fields_to_utf8(buf, buflen, list.fieldc, list.fieldnames);
+}
+
+int cq_drow_to_utf8(char *buf, size_t buflen, struct drow row)
+{
+    return cq_fields_to_utf8(buf, buflen, row.fieldc,
+            (const char **) row.values);
+}
 
 struct dbconn cq_new_connection(const char *host, const char *user,
         const char *passwd, const char *database)
@@ -186,4 +243,79 @@ struct drow *cq_dlist_at(struct dlist *list, size_t index)
         row = row->next;
     }
     return NULL;
+}
+
+int cq_insert(struct dbconn con, const char *table, struct dlist *list)
+{
+    int rc;
+    char *query, *columns, *values;
+    const size_t qlen = 1024;
+    const char *fmt = "INSERT INTO %s(%s) VALUES(%s)";
+
+    query = calloc(qlen, sizeof(char));
+    if (query == NULL)
+        return -1;
+
+    columns = calloc(qlen/2, sizeof(char));
+    if (columns == NULL) {
+        free(query);
+        return -1;
+    }
+
+    values = calloc(qlen/2, sizeof(char));
+    if (values == NULL) {
+        free(query);
+        free(columns);
+        return -1;
+    }
+
+    rc = cq_dlist_fields_to_utf8(columns, qlen/2, *list);
+    if (rc) {
+        free(query);
+        free(columns);
+        free(values);
+        return 100;
+    }
+
+    rc = cq_connect(&con);
+    if (rc) {
+        free(query);
+        free(columns);
+        free(values);
+        return 200;
+    }
+
+    for (struct drow *r = list->first; r != NULL; r = r->next) {
+        rc = cq_drow_to_utf8(values, qlen/2, *r);
+        if (rc)
+            break;
+
+        UChar *buf16 = calloc(qlen, sizeof(UChar));
+        if (buf16 == NULL) {
+            rc = -1;
+            break;
+        }
+        rc = u_snprintf(buf16, qlen, fmt, table, columns, values);
+        if ((size_t) rc >= qlen) {
+            free(buf16);
+            break;
+        }
+        rc = 0;
+
+        UErrorCode status = U_ZERO_ERROR;
+        u_strToUTF8(query, qlen, NULL, buf16, u_strlen(buf16), &status);
+        free(buf16);
+        if (!U_SUCCESS(status))
+            break;
+
+        rc = mysql_query(con.con, query);
+        if (rc)
+            break;
+    }
+
+    cq_close_connection(&con);
+    free(query);
+    free(columns);
+    free(values);
+    return rc;
 }
