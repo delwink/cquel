@@ -35,7 +35,8 @@ rmsdata[1] = u8"Matthew";
 rmsdata[2] = u8"Stallman";
 rmsdata[3] = u8"1953-03-16";
 
-struct dlist *mylist = cq_new_dlist(4, tabledata);
+/* set primary key to NULL for brevity; it's not required */
+struct dlist *mylist = cq_new_dlist(4, tabledata, NULL);
 struct drow *rms = cq_new_drow(4);
 cq_drow_set(rms, rmsdata); /* set this row to have the values from rmsdata */
 
