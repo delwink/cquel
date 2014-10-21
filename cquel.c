@@ -17,11 +17,12 @@
 #include <string.h>
 #include <unicode/ustdio.h>
 #include <unicode/ustring.h>
+#include <stdbool.h>
 
 #include "cquel.h"
 
 int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
-        const char **fieldnames)
+        char **fieldnames)
 {
     UChar *buf16 = calloc(buflen, sizeof(UChar));
     UErrorCode status = U_ZERO_ERROR;
@@ -70,8 +71,7 @@ int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list)
 
 int cq_drow_to_utf8(char *buf, size_t buflen, struct drow row)
 {
-    return cq_fields_to_utf8(buf, buflen, row.fieldc,
-            (const char **) row.values);
+    return cq_fields_to_utf8(buf, buflen, row.fieldc, row.values);
 }
 
 struct dbconn cq_new_connection(const char *host, const char *user,
@@ -144,7 +144,8 @@ void cq_drow_set(struct drow *row, char **values)
     }
 }
 
-struct dlist *cq_new_dlist(size_t fieldc, const char **fieldnames)
+struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
+        const char *primkey)
 {
     struct dlist *list = malloc(sizeof(struct dlist));
     if (list == NULL)
@@ -159,6 +160,7 @@ struct dlist *cq_new_dlist(size_t fieldc, const char **fieldnames)
 
     for (size_t i = 0; i < fieldc; ++i)
         list->fieldnames[i] = fieldnames[i];
+    list->primkey = primkey;
 
     list->first = NULL;
     list->last = NULL;
@@ -232,6 +234,54 @@ void cq_dlist_remove(struct dlist *list, struct drow *row)
     cq_free_drow(row);
 }
 
+int cq_dlist_remove_field_str(struct dlist *list, char *field)
+{
+    size_t i;
+    bool found = false;
+    char *s;
+    for (i = 0; i < list->fieldc; ++i) {
+        s = list->fieldnames[i];
+        if (!strcmp(s, field)) {
+            found = true;
+            break;
+        }
+    }
+
+    if (found) {
+        cq_dlist_remove_field_at(list, i);
+        return 0;
+    }
+
+    return 1;
+}
+
+void cq_dlist_remove_field_at(struct dlist *list, size_t index)
+{
+    if (list == NULL)
+        return;
+
+    for (struct drow *row = list->first; row != NULL; row = row->next) {
+        for (size_t i = index; i < row->fieldc; ++i) {
+            if (i == (row->fieldc - 1)) {
+                --row->fieldc;
+            } else {
+                row->values[i] = row->values[i+1];
+            }
+        }
+    }
+
+    for (size_t i = index; i < list->fieldc; ++i) {
+        if (i == (list->fieldc - 1)) {
+            --list->fieldc;
+        } else {
+            list->fieldnames[i] = list->fieldnames[i+1];
+        }
+    }
+
+    if (!strcmp(list->fieldnames[index], list->primkey))
+        list->primkey = NULL;
+}
+
 struct drow *cq_dlist_at(struct dlist *list, size_t index)
 {
     if (list == NULL)
@@ -249,27 +299,26 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
 {
     int rc;
     char *query, *columns, *values;
-    const size_t qlen = 1024;
     const char *fmt = "INSERT INTO %s(%s) VALUES(%s)";
 
-    query = calloc(qlen, sizeof(char));
+    query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL)
         return -1;
 
-    columns = calloc(qlen/2, sizeof(char));
+    columns = calloc(CQ_QLEN/2, sizeof(char));
     if (columns == NULL) {
         free(query);
         return -1;
     }
 
-    values = calloc(qlen/2, sizeof(char));
+    values = calloc(CQ_QLEN/2, sizeof(char));
     if (values == NULL) {
         free(query);
         free(columns);
         return -1;
     }
 
-    rc = cq_dlist_fields_to_utf8(columns, qlen/2, *list);
+    rc = cq_dlist_fields_to_utf8(columns, CQ_QLEN/2, *list);
     if (rc) {
         free(query);
         free(columns);
@@ -286,24 +335,24 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
     }
 
     for (struct drow *r = list->first; r != NULL; r = r->next) {
-        rc = cq_drow_to_utf8(values, qlen/2, *r);
+        rc = cq_drow_to_utf8(values, CQ_QLEN/2, *r);
         if (rc)
             break;
 
-        UChar *buf16 = calloc(qlen, sizeof(UChar));
+        UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
         if (buf16 == NULL) {
             rc = -1;
             break;
         }
-        rc = u_snprintf(buf16, qlen, fmt, table, columns, values);
-        if ((size_t) rc >= qlen) {
+        rc = u_snprintf(buf16, CQ_QLEN, fmt, table, columns, values);
+        if ((size_t) rc >= CQ_QLEN) {
             free(buf16);
             break;
         }
         rc = 0;
 
         UErrorCode status = U_ZERO_ERROR;
-        u_strToUTF8(query, qlen, NULL, buf16, u_strlen(buf16), &status);
+        u_strToUTF8(query, CQ_QLEN, NULL, buf16, u_strlen(buf16), &status);
         free(buf16);
         if (!U_SUCCESS(status))
             break;

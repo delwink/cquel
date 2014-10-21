@@ -16,6 +16,8 @@
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
 
+#define CQ_QLEN 1024
+
 #include <mysql.h>
 
 #ifdef __cplusplus
@@ -33,6 +35,13 @@ struct dbconn {
     const char *database;
 };
 
+struct dbconn cq_new_connection(const char *host, const char *user,
+        const char *passwd, const char *database);
+
+int cq_connect(struct dbconn *con);
+void cq_close_connection(struct dbconn *con);
+int cq_test(struct dbconn con);
+
 struct drow {
     size_t fieldc;
     char **values;
@@ -47,29 +56,25 @@ void cq_drow_set(struct drow *row, char **values);
 
 struct dlist {
     size_t fieldc;
-    const char **fieldnames;
+    char **fieldnames;
+    const char *primkey;
 
     struct drow *first;
     struct drow *last;
 };
 
-struct dbconn cq_new_connection(const char *host, const char *user,
-        const char *passwd, const char *database);
-
-int cq_connect(struct dbconn *con);
-void cq_close_connection(struct dbconn *con);
-int cq_test(struct dbconn con);
-
-struct dlist *cq_new_dlist(size_t fieldc, const char **fieldnames);
+struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
+        const char *primkey);
 size_t cq_dlist_size(const struct dlist *list);
 void cq_free_dlist(struct dlist *list);
 void cq_dlist_add(struct dlist *list, struct drow *row);
 void cq_dlist_remove(struct dlist *list, struct drow *row);
+int cq_dlist_remove_field_str(struct dlist *list, char *field);
+void cq_dlist_remove_field_at(struct dlist *list, size_t index);
 struct drow *cq_dlist_at(struct dlist *list, size_t index);
 
 int cq_insert(struct dbconn con, const char *table, struct dlist *list);
-int cq_update(struct dbconn con, const char *table, struct dlist *list,
-        const char *conditions);
+int cq_update(struct dbconn con, const char *table, struct dlist *list);
 
 int cq_select(struct dbconn con, const char *table, struct dlist *out,
         const char *conditions);
