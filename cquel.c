@@ -24,15 +24,17 @@
 int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char **fieldnames)
 {
-    UChar *buf16 = calloc(buflen, sizeof(UChar));
+    UChar *buf16;
     UErrorCode status = U_ZERO_ERROR;
     size_t num_left = fieldc;
     int rc = 0;
-    if (buf16 == NULL)
-        return -1;
 
     if (num_left == 0)
         return 1;
+
+    buf16 = calloc(buflen, sizeof(UChar));
+    if (buf16 == NULL)
+        return -1;
 
     for (size_t i = 0; i < fieldc; ++i) {
         UChar *temp = calloc(buflen, sizeof(UChar));
