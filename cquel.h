@@ -73,6 +73,8 @@ int cq_dlist_remove_field_str(struct dlist *list, char *field);
 void cq_dlist_remove_field_at(struct dlist *list, size_t index);
 struct drow *cq_dlist_at(struct dlist *list, size_t index);
 
+int cq_field_to_index(struct dlist *list, const char *field, size_t *out);
+
 int cq_insert(struct dbconn con, const char *table, struct dlist *list);
 int cq_update(struct dbconn con, const char *table, struct dlist *list);
 

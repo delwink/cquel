@@ -295,6 +295,27 @@ struct drow *cq_dlist_at(struct dlist *list, size_t index)
     return NULL;
 }
 
+int cq_field_to_index(struct dlist *list, const char *field, size_t *out)
+{
+    int rc = 0;
+    bool found = false;
+
+    if (out == NULL)
+        return -1;
+
+    for (*out = 0; *out < list->fieldc; ++(*out)) {
+        if (!strcmp(list->fieldnames[*out], field)) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+        rc = 1;
+
+    return rc;
+}
+
 int cq_insert(struct dbconn con, const char *table, struct dlist *list)
 {
     int rc;
