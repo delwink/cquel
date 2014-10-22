@@ -300,8 +300,12 @@ int cq_field_to_index(struct dlist *list, const char *field, size_t *out)
     int rc = 0;
     bool found = false;
 
-    if (out == NULL)
+    if (list == NULL)
         return -1;
+    if (field == NULL)
+        return -2;
+    if (out == NULL)
+        return -3;
 
     for (*out = 0; *out < list->fieldc; ++(*out)) {
         if (!strcmp(list->fieldnames[*out], field)) {
