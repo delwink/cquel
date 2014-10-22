@@ -139,11 +139,18 @@ void cq_free_drow(struct drow *row)
     free(row);
 }
 
-void cq_drow_set(struct drow *row, char **values)
+int cq_drow_set(struct drow *row, char **values)
 {
+    if (row == NULL)
+        return 1;
+    if (values == NULL)
+        return 2;
+
     for (size_t i = 0; i < row->fieldc; ++i) {
         row->values[i] = values[i];
     }
+
+    return 0;
 }
 
 struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,

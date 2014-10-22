@@ -52,7 +52,7 @@ struct drow {
 
 struct drow *cq_new_drow(size_t fieldc);
 void cq_free_drow(struct drow *row);
-void cq_drow_set(struct drow *row, char **values);
+int cq_drow_set(struct drow *row, char **values);
 
 struct dlist {
     size_t fieldc;
