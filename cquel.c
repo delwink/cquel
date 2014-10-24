@@ -306,7 +306,6 @@ struct drow *cq_dlist_at(struct dlist *list, size_t index)
 
 int cq_field_to_index(struct dlist *list, const char *field, size_t *out)
 {
-    int rc = 0;
     bool found = false;
 
     if (list == NULL)
@@ -323,10 +322,7 @@ int cq_field_to_index(struct dlist *list, const char *field, size_t *out)
         }
     }
 
-    if (!found)
-        rc = 1;
-
-    return rc;
+    return !found;
 }
 
 int cq_insert(struct dbconn con, const char *table, struct dlist *list)
@@ -334,6 +330,11 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
     int rc;
     char *query, *columns, *values;
     const char *fmt = "INSERT INTO %s(%s) VALUES(%s)";
+
+    if (table == NULL)
+        return 1;
+    if (list == NULL)
+        return 2;
 
     query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL)
@@ -400,5 +401,58 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
     free(query);
     free(columns);
     free(values);
+    return rc;
+}
+
+int cq_update(struct dbconn con, const char *table, struct dlist *list)
+{
+    int rc;
+    char *query, *column, *value;
+    const char *fmt = "UPDATE %s SET %s=%s WHERE %s=%s";
+
+    if (table == NULL)
+        return 1;
+    if (list == NULL)
+        return 2;
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (query == NULL)
+        return -1;
+
+    column = calloc(CQ_QLEN/2, sizeof(char));
+    if (column == NULL) {
+        free(query);
+        return -1;
+    }
+
+    value = calloc(CQ_QLEN/2, sizeof(char));
+    if (value == NULL) {
+        free(query);
+        free(column);
+        return -1;
+    }
+
+    rc = cq_dlist_fields_to_utf8(column, CQ_QLEN/2, *list);
+    if (rc) {
+        free(query);
+        free(column);
+        free(value);
+        return 100;
+    }
+
+    rc = cq_connect(&con);
+    if (rc) {
+        free(query);
+        free(column);
+        free(value);
+        return 200;
+    }
+
+    /* TODO: commit loop */
+
+    cq_close_connection(&con);
+    free(query);
+    free(column);
+    free(value);
     return rc;
 }
