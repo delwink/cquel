@@ -66,6 +66,77 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
     return rc;
 }
 
+int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
+        struct drow row)
+{
+    UChar *buf16;
+    UErrorCode status = U_ZERO_ERROR;
+    size_t num_left = list.fieldc;
+    int rc = 0;
+
+    if (num_left == 0)
+        return 1;
+
+    buf16 = calloc(buflen, sizeof(UChar));
+    if (buf16 == NULL)
+        return -1;
+
+    for (size_t i = 0; i < list.fieldc; ++i) {
+        if (!strcmp(list.fieldnames[i], list.primkey)) {
+            --num_left;
+            continue;
+        }
+
+        UChar *ftemp = calloc(buflen, sizeof(UChar));
+        if (ftemp == NULL) {
+            rc = -1;
+            break;
+        }
+
+        UChar *vtemp = calloc(buflen, sizeof(UChar));
+        if (vtemp == NULL) {
+            rc = -1;
+            free(ftemp);
+            break;
+        }
+
+        u_strFromUTF8(ftemp, buflen, NULL, list.fieldnames[i],
+                strlen(list.fieldnames[i]), &status);
+        if (!U_SUCCESS(status)) {
+            rc = 2;
+            free(ftemp);
+            free(vtemp);
+            break;
+        }
+
+        u_strFromUTF8(vtemp, buflen, NULL, row.values[i], strlen(row.values[i]),
+                &status);
+        if (!U_SUCCESS(status)) {
+            rc = 3;
+            free(ftemp);
+            free(vtemp);
+            break;
+        }
+
+        u_strcat(buf16, ftemp);
+        u_strcat(buf16, u"=");
+        u_strcat(buf16, vtemp);
+
+        free(ftemp);
+        free(vtemp);
+
+        if (--num_left > 0)
+            u_strcat(buf16, u",");
+    }
+
+    u_strToUTF8(buf, buflen, NULL, buf16, u_strlen(buf16), &status);
+    if (!U_SUCCESS(status))
+        rc = 4;
+
+    free(buf16);
+    return rc;
+}
+
 int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list)
 {
     return cq_fields_to_utf8(buf, buflen, list.fieldc, list.fieldnames);
@@ -408,7 +479,7 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
 {
     int rc;
     char *query, *column, *value;
-    const char *fmt = "UPDATE %s SET %s=%s WHERE %s=%s";
+    const char *fmt = "UPDATE %s SET %s WHERE %s=%s";
 
     if (table == NULL)
         return 1;
@@ -448,7 +519,9 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
         return 200;
     }
 
-    /* TODO: commit loop */
+    for (struct drow *r = list->first; r != NULL; r = r->next) {
+        
+    }
 
     cq_close_connection(&con);
     free(query);
