@@ -400,7 +400,7 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
 {
     int rc;
     char *query, *columns, *values;
-    const char *fmt = "INSERT INTO %s(%s) VALUES(%s)";
+    const char *fmt = u8"INSERT INTO %s(%s) VALUES(%s)";
 
     if (table == NULL)
         return 1;
@@ -478,8 +478,8 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
 int cq_update(struct dbconn con, const char *table, struct dlist *list)
 {
     int rc;
-    char *query, *column, *value;
-    const char *fmt = "UPDATE %s SET %s WHERE %s=%s";
+    char *query, *columns;
+    const char *fmt = u8"UPDATE %s SET %s WHERE %s=%s";
 
     if (table == NULL)
         return 1;
@@ -490,42 +490,53 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
     if (query == NULL)
         return -1;
 
-    column = calloc(CQ_QLEN/2, sizeof(char));
-    if (column == NULL) {
+    columns = calloc(CQ_QLEN/2, sizeof(char));
+    if (columns == NULL) {
         free(query);
         return -1;
     }
 
-    value = calloc(CQ_QLEN/2, sizeof(char));
-    if (value == NULL) {
-        free(query);
-        free(column);
-        return -1;
+    size_t pindex;
+    bool found = false;
+    for (pindex = 0; pindex < list->fieldc; ++pindex) {
+        if (!strcmp(list->fieldnames[pindex], list->primkey)) {
+            found = true;
+            break;
+        }
     }
 
-    rc = cq_dlist_fields_to_utf8(column, CQ_QLEN/2, *list);
-    if (rc) {
+    if (!found) {
         free(query);
-        free(column);
-        free(value);
-        return 100;
+        free(columns);
+        return 3;
     }
 
     rc = cq_connect(&con);
     if (rc) {
         free(query);
-        free(column);
-        free(value);
+        free(columns);
         return 200;
     }
 
     for (struct drow *r = list->first; r != NULL; r = r->next) {
-        
+        rc = cq_dlist_to_update_utf8(columns, CQ_QLEN/2, *list, *r);
+        if (rc)
+            break;
+
+        rc = snprintf(query, CQ_QLEN, fmt, table, columns, list->primkey,
+                r->values[pindex]);
+        if ((size_t) rc >= CQ_QLEN) {
+            rc += 300;
+            break;
+        }
+
+        rc = mysql_query(con.con, query);
+        if (rc)
+            break;
     }
 
     cq_close_connection(&con);
     free(query);
-    free(column);
-    free(value);
+    free(columns);
     return rc;
 }
