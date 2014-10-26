@@ -21,7 +21,6 @@
  * @version 1.0
  * @date 10/26/2014
  * @author David McMackins II
- * @title Delwink cquel API
  * @brief MySQL C API wrapper with dynamic data structures
  */
 
