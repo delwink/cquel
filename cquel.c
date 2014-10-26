@@ -338,10 +338,13 @@ int cq_dlist_remove_field_str(struct dlist *list, char *field)
     return 1;
 }
 
-void cq_dlist_remove_field_at(struct dlist *list, size_t index)
+int cq_dlist_remove_field_at(struct dlist *list, size_t index)
 {
     if (list == NULL)
-        return;
+        return 1;
+
+    if (index >= list->fieldc)
+        return 2;
 
     for (struct drow *row = list->first; row != NULL; row = row->next) {
         for (size_t i = index; i < row->fieldc; ++i) {
@@ -363,6 +366,8 @@ void cq_dlist_remove_field_at(struct dlist *list, size_t index)
 
     if (!strcmp(list->fieldnames[index], list->primkey))
         list->primkey = NULL;
+
+    return 0;
 }
 
 struct drow *cq_dlist_at(struct dlist *list, size_t index)
@@ -456,6 +461,7 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
         rc = u_snprintf(buf16, CQ_QLEN, fmt, table, columns, values);
         if ((size_t) rc >= CQ_QLEN) {
             free(buf16);
+            rc = -1;
             break;
         }
         rc = 0;
@@ -463,12 +469,16 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
         UErrorCode status = U_ZERO_ERROR;
         u_strToUTF8(query, CQ_QLEN, NULL, buf16, u_strlen(buf16), &status);
         free(buf16);
-        if (!U_SUCCESS(status))
+        if (!U_SUCCESS(status)) {
+            rc = -1;
             break;
+        }
 
         rc = mysql_query(con.con, query);
-        if (rc)
+        if (rc) {
+            rc = 201;
             break;
+        }
     }
 
     cq_close_connection(&con);
@@ -523,19 +533,23 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
 
     for (struct drow *r = list->first; r != NULL; r = r->next) {
         rc = cq_dlist_to_update_utf8(columns, CQ_QLEN/2, *list, *r);
-        if (rc)
+        if (rc) {
+            rc = 101;
             break;
+        }
 
         rc = snprintf(query, CQ_QLEN, fmt, table, columns, list->primkey,
                 r->values[pindex]);
         if ((size_t) rc >= CQ_QLEN) {
-            rc += 300;
+            rc = 102;
             break;
         }
 
         rc = mysql_query(con.con, query);
-        if (rc)
+        if (rc) {
+            rc = 201;
             break;
+        }
     }
 
     cq_close_connection(&con);
