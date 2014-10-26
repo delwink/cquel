@@ -16,6 +16,15 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file cquel.h
+ * @version 1.0
+ * @date 10/26/2014
+ * @author David McMackins II
+ * @title Delwink cquel API
+ * @brief MySQL C API wrapper with dynamic data structures
+ */
+
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
 
@@ -30,6 +39,9 @@ extern "C"
 
 struct drow;
 
+/**
+ * @brief The universal database connection auxiliary structure for cquel.
+ */
 struct dbconn {
     MYSQL *con;
     const char *host;
@@ -38,6 +50,14 @@ struct dbconn {
     const char *database;
 };
 
+/**
+ * @brief cq_new_connection Constructs a database connection.
+ * @param host The hostname or IP address of the database server.
+ * @param user The username with which to log into the database server.
+ * @param passwd The password by which to be authenticated.
+ * @param database The database to use; can be NULL.
+ * @return A new database connection object.
+ */
 struct dbconn cq_new_connection(const char *host, const char *user,
         const char *passwd, const char *database);
 
