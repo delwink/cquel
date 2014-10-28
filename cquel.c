@@ -210,6 +210,8 @@ void cq_free_drow(struct drow *row)
 {
     if (row == NULL)
         return;
+    for (size_t i = 0; i < row->fieldc; ++i)
+        free(row->values[i]);
     free(row->values);
     free(row);
 }
@@ -221,8 +223,24 @@ int cq_drow_set(struct drow *row, char **values)
     if (values == NULL)
         return 2;
 
-    for (size_t i = 0; i < row->fieldc; ++i) {
-        row->values[i] = values[i];
+    int rc = 0;
+    size_t i;
+    for (i = 0; i < row->fieldc; ++i) {
+        size_t len = strlen(values[i]);
+        if (strlen(row->values[i]) != len)
+            row->values[i] = realloc(row->values[i], len+1);
+        if (row->values[i] == NULL) {
+            rc = -1;
+            break;
+        }
+
+        strcpy(row->values[i], values[i]);
+    }
+
+    if (rc) {
+        for (size_t j = 0; j < i; ++j)
+            free(row->values[j]);
+        return -1;
     }
 
     return 0;
@@ -242,9 +260,35 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
         return NULL;
     }
 
-    for (size_t i = 0; i < fieldc; ++i)
-        list->fieldnames[i] = fieldnames[i];
-    list->primkey = primkey;
+    size_t len, i;
+    int rc;
+    for (i = 0; i < fieldc; ++i) {
+        len = strlen(fieldnames[i]);
+        list->fieldnames[i] = calloc(len+1, sizeof(char));
+        if (list->fieldnames[i] == NULL) {
+            rc = -1;
+            break;
+        }
+        strcpy(list->fieldnames[i], fieldnames[i]);
+    }
+    if (rc) {
+        for (size_t j = 0; j < i; ++j)
+            free(list->fieldnames[j]);
+        free(list->fieldnames);
+        free(list);
+        return NULL;
+    }
+
+    len = strlen(primkey);
+    list->primkey = calloc(len+1, sizeof(char));
+    if (list->primkey == NULL) {
+        for (size_t j = 0; j < i; ++j)
+            free(list->fieldnames[j]);
+        free(list->fieldnames);
+        free(list);
+        return NULL;
+    }
+    strcpy(list->primkey, primkey);
 
     list->first = NULL;
     list->last = NULL;
@@ -270,6 +314,8 @@ void cq_free_dlist(struct dlist *list)
 {
     if (list == NULL)
         return;
+    for (size_t i = 0; i < list->fieldc; ++i)
+        free(list->fieldnames[i]);
     free(list->fieldnames);
     struct drow *row = list->first;
     struct drow *next;
@@ -677,7 +723,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     }
 
     if (rc) {
-        for (size_t j = 0; j <= i; ++j) {
+        for (size_t j = 0; j < i; ++j) {
             free(fieldnames[j]);
         }
         free(fieldnames);
@@ -688,7 +734,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
 
     char *primkey = calloc(CQ_QLEN, sizeof(char));
     if (primkey == NULL) {
-        for (size_t j = 0; j <= i; ++j) {
+        for (size_t j = 0; j < i; ++j) {
             free(fieldnames[j]);
         }
         free(fieldnames);
@@ -700,7 +746,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     rc = cq_get_primkey(con, table, primkey, CQ_QLEN);
     free(table);
     if (rc) {
-        for (size_t j = 0; j <= i; ++j) {
+        for (size_t j = 0; j < i; ++j) {
             free(fieldnames[j]);
         }
         free(fieldnames);
