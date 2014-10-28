@@ -122,7 +122,7 @@ int cq_drow_set(struct drow *row, char **values);
 struct dlist {
     size_t fieldc;
     char **fieldnames;
-    const char *primkey;
+    char *primkey;
 
     struct drow *first;
     struct drow *last;
@@ -222,8 +222,12 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list);
  */
 int cq_update(struct dbconn con, const char *table, struct dlist *list);
 
-int cq_select(struct dbconn con, const char *table, struct dlist *out,
+int cq_select_query(struct dbconn con, struct dlist *out, const char *query);
+
+int cq_select_all(struct dbconn con, const char *table, struct dlist *out,
         const char *conditions);
+
+int cq_get_primkey(struct dbconn con, const char *table, char *out);
 
 #ifdef __cplusplus
 }

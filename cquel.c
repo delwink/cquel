@@ -21,6 +21,7 @@
 #include <unicode/ustdio.h>
 #include <unicode/ustring.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "cquel.h"
 
@@ -556,4 +557,157 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
     free(query);
     free(columns);
     return rc;
+}
+
+int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
+{
+    int rc;
+    char *query;
+
+    if (q == NULL)
+        return 1;
+    if (strlen(q) >= CQ_QLEN)
+        return 2;
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (query == NULL)
+        return -1;
+
+    UChar *tempquery, *tempq;
+    UErrorCode status = U_ZERO_ERROR;
+
+    tempq = calloc(CQ_QLEN, sizeof(UChar));
+    if (tempq == NULL) {
+        free(query);
+        return -1;
+    }
+
+    u_strFromUTF8(tempq, CQ_QLEN, NULL, q, strlen(q), &status);
+    if (!U_SUCCESS(status)) {
+        free(query);
+        free(tempq);
+        return 101;
+    }
+
+    tempquery = calloc(CQ_QLEN, sizeof(UChar));
+    if (tempquery == NULL) {
+        free(query);
+        free(tempq);
+        return 102;
+    }
+
+    rc = u_snprintf_u(tempquery, CQ_QLEN, u"SELECT %S", tempq);
+    if ((size_t) rc >= CQ_QLEN) {
+        free(query);
+        free(tempq);
+        free(tempquery);
+        return 103;
+    }
+
+    u_strToUTF8(query, CQ_QLEN, NULL, tempquery, u_strlen(tempquery), &status);
+
+    free(tempq);
+    free(tempquery);
+
+    if (!U_SUCCESS(status)) {
+        free(query);
+        return 104;
+    }
+
+    rc = cq_connect(&con);
+    if (rc) {
+        free(query);
+        return 200;
+    }
+
+    rc = mysql_query(con.con, query);
+    if (rc) {
+        free(query);
+        cq_close_connection(&con);
+        return 201;
+    }
+
+    MYSQL_RES *result = mysql_store_result(con.con);
+    cq_close_connection(&con);
+    if (result == NULL) {
+        free(query);
+        return 202;
+    }
+
+    char *from = strcasestr(query, u8"FROM") + strlen(u8"FROM");
+    while (isblank(*(++from)))
+        ;
+    size_t len = 0;
+    while (*(from + len) && !isblank(*(from + len)) && *(from + len) != '\n')
+        ++len;
+
+    char *table = calloc(len+1, sizeof(char));
+    strncpy(table, from, len);
+    table[len] = '\0';
+    free(query);
+
+    size_t num_fields = mysql_num_fields(result);
+    if (!num_fields) {
+        free(table);
+        mysql_free_result(result);
+        out = NULL;
+        return 0;
+    }
+
+    char **fieldnames = calloc(num_fields, sizeof(char *));
+    if (fieldnames == NULL) {
+        free(table);
+        mysql_free_result(result);
+        return -1;
+    }
+
+    MYSQL_FIELD *field;
+    size_t i;
+    for (i = 0; i < num_fields; ++i) {
+        if ((field = mysql_fetch_field(result)) == NULL)
+            break;
+
+        size_t flen = strlen(field->name);
+        fieldnames[i] = calloc(flen, sizeof(char));
+        if (fieldnames[i] == NULL) {
+            rc = -1;
+            break;
+        }
+        strcpy(fieldnames[i], field->name);
+    }
+
+    if (rc) {
+        for (size_t j = 0; j <= i; ++j) {
+            free(fieldnames[j]);
+        }
+        free(fieldnames);
+        free(table);
+        mysql_free_result(result);
+        return rc;
+    }
+
+    char *primkey = calloc(CQ_QLEN, sizeof(char));
+    if (primkey == NULL) {
+        free(fieldnames);
+        free(table);
+        mysql_free_result(result);
+        return -1;
+    }
+
+    rc = cq_get_primkey(con, table, primkey);
+    free(table);
+    if (rc) {
+        free(fieldnames);
+        mysql_free_result(result);
+        return 205;
+    }
+
+    out = cq_new_dlist(num_fields, fieldnames, primkey);
+    for (size_t j = 0; j <= i; ++j) {
+        free(fieldnames[j]);
+    }
+    free(fieldnames);
+    free(primkey);
+
+    return 0;
 }
