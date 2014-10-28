@@ -27,10 +27,12 @@
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
 
+#ifndef CQ_QLEN
 /**
  * @brief Maximum query buffer length.
  */
 #define CQ_QLEN 1024
+#endif
 
 #include <mysql.h>
 
