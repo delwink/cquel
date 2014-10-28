@@ -688,6 +688,9 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
 
     char *primkey = calloc(CQ_QLEN, sizeof(char));
     if (primkey == NULL) {
+        for (size_t j = 0; j <= i; ++j) {
+            free(fieldnames[j]);
+        }
         free(fieldnames);
         free(table);
         mysql_free_result(result);
@@ -697,6 +700,9 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     rc = cq_get_primkey(con, table, primkey);
     free(table);
     if (rc) {
+        for (size_t j = 0; j <= i; ++j) {
+            free(fieldnames[j]);
+        }
         free(fieldnames);
         mysql_free_result(result);
         return 205;
@@ -709,5 +715,91 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     free(fieldnames);
     free(primkey);
 
+    if (out == NULL) {
+        mysql_free_result(result);
+        return -1;
+    }
+
+    MYSQL_ROW row;
+    char **rvals = calloc(num_fields, sizeof(char *));
+    if (rvals == NULL) {
+        cq_free_dlist(out);
+        mysql_free_result(result);
+    }
+    size_t in = 0;
+    while ((row = mysql_fetch_row(result))) {
+        struct drow *data = cq_new_drow(num_fields);
+        if (data == NULL) {
+            rc = -1;
+            break;
+        }
+
+        for (in = 0; in < num_fields; ++in) {
+            size_t len = strlen(row[in]);
+            rvals[in] = calloc(len+1, sizeof(char));
+            if (rvals[in] == NULL) {
+                rc = -1;
+                break;
+            }
+            strcpy(rvals[in], row[in]);
+        }
+        if (rc) {
+            break;
+        }
+
+        rc = cq_drow_set(data, rvals);
+        if (rc) {
+            break;
+        }
+
+        cq_dlist_add(out, data);
+    }
+
+    for (size_t j = 0; j <= in; ++j) {
+        free(rvals[j]);
+    }
+    free(rvals);
+    mysql_free_result(result);
+
+    if (rc) {
+        cq_free_dlist(out);
+    }
+
     return 0;
+}
+
+int cq_select_all(struct dbconn con, const char *table, struct dlist *out,
+        const char *conditions)
+{
+    int rc;
+    char *query;
+    const char *fmt = u8"SELECT * FROM %s %s";
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (query == NULL)
+        return -1;
+
+    UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
+    if (buf16 == NULL) {
+        free(query);
+        return -1;
+    }
+
+    rc = u_snprintf(buf16, CQ_QLEN, fmt, table, conditions);
+    if ((size_t) rc >= CQ_QLEN) {
+        free(query);
+        free(buf16);
+        return 100;
+    }
+
+    UErrorCode status = U_ZERO_ERROR;
+    u_strToUTF8(query, CQ_QLEN, NULL, buf16, u_strlen(buf16), &status);
+    free(buf16);
+    if (!U_SUCCESS(status)) {
+        free(query);
+        return 101;
+    }
+
+    rc = cq_select_query(con, out, query);
+    return rc;
 }
