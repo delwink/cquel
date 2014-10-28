@@ -231,7 +231,7 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list);
  * @param query UTF-8 SQL to be appended to "SELECT ".
  * @return 0 on success; less than 0 if memory error; from 1 to 10 if input
  * error; from 100 to 199 if query setup error; 200 if database connection
- * error; 201 if error submitting query.
+ * error; 201 if error submitting query; 202-299 if error parsing data.
  */
 int cq_select_query(struct dbconn con, struct dlist *out, const char *query);
 
@@ -241,12 +241,25 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *query);
  * @param table UTF-8 string matching the name of the table to be pulled.
  * @param out An unallocated data list into which the data will be inserted.
  * @param conditions UTF-8 SQL where_condition.
- * @return See cq_select_query().
+ * @return 0 on success; less than 0 if memory error; from 1 to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query; 202-299 if error parsing data.
  */
 int cq_select_all(struct dbconn con, const char *table, struct dlist *out,
         const char *conditions);
 
-int cq_get_primkey(struct dbconn con, const char *table, char *out);
+/**
+ * @brief Gets the name of the primary key of a database table.
+ * @param con Database connection object with connection details.
+ * @param table UTF-8 string matching the name of the table to be examined.
+ * @param out Buffer in which to store the result.
+ * @param len Length of the out buffer.
+ * @return 0 on success; less than 0 if memory error; from 1 to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query; 202-299 if error parsing data.
+ */
+int cq_get_primkey(struct dbconn con, const char *table, char *out,
+        size_t len);
 
 #ifdef __cplusplus
 }

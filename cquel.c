@@ -697,7 +697,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
         return -1;
     }
 
-    rc = cq_get_primkey(con, table, primkey);
+    rc = cq_get_primkey(con, table, primkey, CQ_QLEN);
     free(table);
     if (rc) {
         for (size_t j = 0; j <= i; ++j) {
@@ -802,4 +802,67 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist *out,
 
     rc = cq_select_query(con, out, query);
     return rc;
+}
+
+int cq_get_primkey(struct dbconn con, const char *table, char *out,
+        size_t len)
+{
+    int rc;
+    char *query;
+    const char *fmt = u8"SHOW KEYS FROM %s WHERE Key_name = 'PRIMARY'";
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (query == NULL)
+        return -1;
+
+    UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
+    if (buf16 == NULL) {
+        free(query);
+        return -1;
+    }
+
+    rc = u_snprintf(buf16, CQ_QLEN, fmt, table);
+    if ((size_t) rc >= CQ_QLEN) {
+        free(buf16);
+        free(query);
+        return 100;
+    }
+
+    UErrorCode status = U_ZERO_ERROR;
+    u_strToUTF8(query, CQ_QLEN, NULL, buf16, u_strlen(buf16), &status);
+    free(buf16);
+    if (!U_SUCCESS(status)) {
+        free(query);
+        return 101;
+    }
+
+    rc = cq_connect(&con);
+    if (rc) {
+        free(query);
+        return 200;
+    }
+
+    rc = mysql_query(con.con, query);
+    free(query);
+    if (rc) {
+        cq_close_connection(&con);
+        return 201;
+    }
+
+    MYSQL_RES *result = mysql_store_result(con.con);
+    cq_close_connection(&con);
+    if (result == NULL)
+        return 202;
+
+    MYSQL_ROW row = mysql_fetch_row(result);
+    if (!row) {
+        mysql_free_result(result);
+        return 203;
+    }
+
+    /* 5th column is documented to be the column name */
+    strncpy(out, row[4], len);
+    mysql_free_result(result);
+
+    return 0;
 }
