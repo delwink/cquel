@@ -43,7 +43,7 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
     for (size_t i = 0; i < fieldc; ++i) {
         UChar *temp = calloc(buflen, sizeof(UChar));
         if (temp == NULL) {
-            rc = -1;
+            rc = -2;
             break;
         }
 
@@ -83,7 +83,7 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
 
     buf16 = calloc(buflen, sizeof(UChar));
     if (buf16 == NULL)
-        return -1;
+        return -2;
 
     for (size_t i = 0; i < list.fieldc; ++i) {
         if (!strcmp(list.fieldnames[i], list.primkey)) {
@@ -93,13 +93,13 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
 
         UChar *ftemp = calloc(buflen, sizeof(UChar));
         if (ftemp == NULL) {
-            rc = -1;
+            rc = -3;
             break;
         }
 
         UChar *vtemp = calloc(buflen, sizeof(UChar));
         if (vtemp == NULL) {
-            rc = -1;
+            rc = -4;
             free(ftemp);
             break;
         }
@@ -393,6 +393,7 @@ int cq_dlist_remove_field_at(struct dlist *list, size_t index)
     if (index >= list->fieldc)
         return 2;
 
+    /* FIXME: doesn't free allocated memory */
     for (struct drow *row = list->first; row != NULL; row = row->next) {
         for (size_t i = index; i < row->fieldc; ++i) {
             if (i == (row->fieldc - 1)) {
@@ -469,14 +470,14 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
     columns = calloc(CQ_QLEN/2, sizeof(char));
     if (columns == NULL) {
         free(query);
-        return -1;
+        return -2;
     }
 
     values = calloc(CQ_QLEN/2, sizeof(char));
     if (values == NULL) {
         free(query);
         free(columns);
-        return -1;
+        return -3;
     }
 
     rc = cq_dlist_fields_to_utf8(columns, CQ_QLEN/2, *list);
@@ -502,13 +503,13 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
 
         UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
         if (buf16 == NULL) {
-            rc = -1;
+            rc = -4;
             break;
         }
         rc = u_snprintf(buf16, CQ_QLEN, fmt, table, columns, values);
         if ((size_t) rc >= CQ_QLEN) {
             free(buf16);
-            rc = -1;
+            rc = -5;
             break;
         }
         rc = 0;
@@ -553,7 +554,7 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
     columns = calloc(CQ_QLEN/2, sizeof(char));
     if (columns == NULL) {
         free(query);
-        return -1;
+        return -2;
     }
 
     size_t pindex;
@@ -625,7 +626,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     tempq = calloc(CQ_QLEN, sizeof(UChar));
     if (tempq == NULL) {
         free(query);
-        return -1;
+        return -2;
     }
 
     u_strFromUTF8(tempq, CQ_QLEN, NULL, q, strlen(q), &status);
@@ -704,7 +705,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     if (fieldnames == NULL) {
         free(table);
         mysql_free_result(result);
-        return -1;
+        return -3;
     }
 
     MYSQL_FIELD *field;
@@ -716,7 +717,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
         size_t flen = strlen(field->name);
         fieldnames[i] = calloc(flen, sizeof(char));
         if (fieldnames[i] == NULL) {
-            rc = -1;
+            rc = -4;
             break;
         }
         strcpy(fieldnames[i], field->name);
@@ -740,7 +741,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
         free(fieldnames);
         free(table);
         mysql_free_result(result);
-        return -1;
+        return -5;
     }
 
     rc = cq_get_primkey(con, table, primkey, CQ_QLEN);
@@ -763,7 +764,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
 
     if (out == NULL) {
         mysql_free_result(result);
-        return -1;
+        return -6;
     }
 
     MYSQL_ROW row;
@@ -776,7 +777,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     while ((row = mysql_fetch_row(result))) {
         struct drow *data = cq_new_drow(num_fields);
         if (data == NULL) {
-            rc = -1;
+            rc = -7;
             break;
         }
 
@@ -784,7 +785,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
             size_t len = strlen(row[in]);
             rvals[in] = calloc(len+1, sizeof(char));
             if (rvals[in] == NULL) {
-                rc = -1;
+                rc = -8;
                 break;
             }
             strcpy(rvals[in], row[in]);
@@ -823,12 +824,12 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist *out,
 
     query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL)
-        return -1;
+        return -10;
 
     UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
     if (buf16 == NULL) {
         free(query);
-        return -1;
+        return -11;
     }
 
     rc = u_snprintf(buf16, CQ_QLEN, fmt, table, conditions);
@@ -859,12 +860,12 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
 
     query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL)
-        return -1;
+        return -20;
 
     UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
     if (buf16 == NULL) {
         free(query);
-        return -1;
+        return -21;
     }
 
     rc = u_snprintf(buf16, CQ_QLEN, fmt, table);
