@@ -228,7 +228,7 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list);
  * error; from 100 to 199 if query setup error; 200 if database connection
  * error; 201 if error submitting query; 202-299 if error parsing data.
  */
-int cq_select_query(struct dbconn con, struct dlist *out, const char *query);
+int cq_select_query(struct dbconn con, struct dlist **out, const char *query);
 
 /**
  * @brief Pulls a table from the database.
@@ -240,7 +240,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *query);
  * error; from 100 to 199 if query setup error; 200 if database connection
  * error; 201 if error submitting query; 202-299 if error parsing data.
  */
-int cq_select_all(struct dbconn con, const char *table, struct dlist *out,
+int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
         const char *conditions);
 
 /**

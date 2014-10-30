@@ -633,7 +633,7 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
     return rc;
 }
 
-int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
+int cq_select_query(struct dbconn con, struct dlist **out, const char *q)
 {
     int rc;
     char *query;
@@ -724,7 +724,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     if (!num_fields) {
         free(table);
         mysql_free_result(result);
-        out = NULL;
+        *out = NULL;
         return 0;
     }
 
@@ -782,14 +782,14 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
         return 205;
     }
 
-    out = cq_new_dlist(num_fields, fieldnames, primkey);
+    *out = cq_new_dlist(num_fields, fieldnames, primkey);
     for (size_t j = 0; j <= i; ++j) {
         free(fieldnames[j]);
     }
     free(fieldnames);
     free(primkey);
 
-    if (out == NULL) {
+    if (*out == NULL) {
         mysql_free_result(result);
         return -6;
     }
@@ -797,7 +797,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     MYSQL_ROW row;
     char **rvals = calloc(num_fields, sizeof(char *));
     if (rvals == NULL) {
-        cq_free_dlist(out);
+        cq_free_dlist(*out);
         mysql_free_result(result);
     }
     size_t in = 0;
@@ -826,7 +826,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
             break;
         }
 
-        cq_dlist_add(out, data);
+        cq_dlist_add(*out, data);
     }
 
     for (size_t j = 0; j < in; ++j) {
@@ -836,13 +836,13 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
     mysql_free_result(result);
 
     if (rc) {
-        cq_free_dlist(out);
+        cq_free_dlist(*out);
     }
 
     return 0;
 }
 
-int cq_select_all(struct dbconn con, const char *table, struct dlist *out,
+int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
         const char *conditions)
 {
     int rc;
