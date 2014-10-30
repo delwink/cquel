@@ -25,6 +25,15 @@
 
 #include "cquel.h"
 
+size_t CQ_QLEN = 0;
+size_t CQ_FMAXLEN = 0;
+
+void cq_init(size_t qlen, size_t fmaxlen)
+{
+    CQ_QLEN = qlen;
+    CQ_FMAXLEN = fmaxlen;
+}
+
 int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char **fieldnames)
 {
@@ -194,9 +203,27 @@ struct drow *cq_new_drow(size_t fieldc)
     struct drow *row = malloc(sizeof(struct drow));
     if (row == NULL)
         return NULL;
-    row->values = calloc(fieldc, sizeof(char *));
 
-    if (row->values == NULL) {
+    row->fieldc = fieldc;
+
+    if ((row->values = calloc(fieldc, sizeof(char *))) == NULL) {
+        free(row);
+        return NULL;
+    }
+
+    int rc = 0;
+    size_t i;
+    for (i = 0; i < fieldc; ++i) {
+        if ((row->values[i] = calloc(CQ_FMAXLEN, sizeof(char))) == NULL) {
+            rc = -1;
+        }
+    }
+
+    if (rc) {
+        for (size_t j = 0; j < i; ++j) {
+            free(row->values[j]);
+        }
+        free(row->values);
         free(row);
         return NULL;
     }
@@ -226,14 +253,10 @@ int cq_drow_set(struct drow *row, char **values)
     int rc = 0;
     size_t i;
     for (i = 0; i < row->fieldc; ++i) {
-        size_t len = strlen(values[i]);
-        if (strlen(row->values[i]) != len)
-            row->values[i] = realloc(row->values[i], len+1);
-        if (row->values[i] == NULL) {
+        if (strlen(values[i]) >= CQ_FMAXLEN) {
             rc = -1;
             break;
         }
-
         strcpy(row->values[i], values[i]);
     }
 
@@ -260,11 +283,14 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
         return NULL;
     }
 
-    size_t len, i;
-    int rc;
+    size_t i;
+    int rc = 0;
     for (i = 0; i < fieldc; ++i) {
-        len = strlen(fieldnames[i]);
-        list->fieldnames[i] = calloc(len+1, sizeof(char));
+        if (strlen(fieldnames[i]) >= CQ_FMAXLEN) {
+            rc = -1;
+            break;
+        }
+        list->fieldnames[i] = calloc(CQ_FMAXLEN, sizeof(char));
         if (list->fieldnames[i] == NULL) {
             rc = -1;
             break;
@@ -279,9 +305,8 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
         return NULL;
     }
 
-    len = strlen(primkey);
-    list->primkey = calloc(len+1, sizeof(char));
-    if (list->primkey == NULL) {
+    list->primkey = calloc(CQ_FMAXLEN, sizeof(char));
+    if (list->primkey == NULL || strlen(primkey) >= CQ_FMAXLEN) {
         for (size_t j = 0; j < i; ++j)
             free(list->fieldnames[j]);
         free(list->fieldnames);
@@ -393,7 +418,6 @@ int cq_dlist_remove_field_at(struct dlist *list, size_t index)
     if (index >= list->fieldc)
         return 2;
 
-    /* FIXME: doesn't free allocated memory */
     for (struct drow *row = list->first; row != NULL; row = row->next) {
         for (size_t i = index; i < row->fieldc; ++i) {
             if (i == (row->fieldc - 1)) {
@@ -401,6 +425,7 @@ int cq_dlist_remove_field_at(struct dlist *list, size_t index)
             } else {
                 row->values[i] = row->values[i+1];
             }
+            free(row->values[i]);
         }
     }
 
@@ -410,10 +435,12 @@ int cq_dlist_remove_field_at(struct dlist *list, size_t index)
         } else {
             list->fieldnames[i] = list->fieldnames[i+1];
         }
+        free(list->fieldnames[i]);
     }
 
-    if (!strcmp(list->fieldnames[index], list->primkey))
-        list->primkey = NULL;
+    if (!strcmp(list->fieldnames[index], list->primkey)) {
+        free(list->primkey);
+    }
 
     return 0;
 }
@@ -802,7 +829,7 @@ int cq_select_query(struct dbconn con, struct dlist *out, const char *q)
         cq_dlist_add(out, data);
     }
 
-    for (size_t j = 0; j <= in; ++j) {
+    for (size_t j = 0; j < in; ++j) {
         free(rvals[j]);
     }
     free(rvals);
