@@ -849,7 +849,7 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
 {
     int rc;
     char *query;
-    const char *fmt = u8"SELECT * FROM %s %s";
+    const char *fmt = u8"* FROM %s %s";
 
     query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL)
