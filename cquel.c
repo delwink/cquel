@@ -735,6 +735,7 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *q)
         return -3;
     }
 
+    /* TODO: Make this a function */
     MYSQL_FIELD *field;
     size_t i;
     for (i = 0; i < num_fields; ++i) {
@@ -759,6 +760,7 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *q)
         mysql_free_result(result);
         return rc;
     }
+    /* end TODO */
 
     char *primkey = calloc(CQ_QLEN, sizeof(char));
     if (primkey == NULL) {
