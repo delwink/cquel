@@ -142,9 +142,16 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
             break;
         }
 
+        bool isstr = false;
+        for (int32_t j = 0; j < u_strlen(vtemp); ++j)
+            if (!isdigit(vtemp[j]))
+                isstr = true;
+
         u_strcat(buf16, ftemp);
         u_strcat(buf16, u"=");
+        if (isstr) u_strcat(buf16, u"'");
         u_strcat(buf16, vtemp);
+        if (isstr) u_strcat(buf16, u"'");
 
         free(ftemp);
         free(vtemp);
