@@ -35,7 +35,7 @@ void cq_init(size_t qlen, size_t fmaxlen)
 }
 
 int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
-        char **fieldnames)
+        char **fieldnames, bool usequotes)
 {
     UChar *buf16;
     UErrorCode status = U_ZERO_ERROR;
@@ -64,7 +64,19 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
             break;
         }
 
+        bool isstr = false;
+        if (usequotes) {
+            for (int32_t j = 0; j < u_strlen(temp); ++j) {
+                if (!isdigit(temp[j])) {
+                    isstr = true;
+                    break;
+                }
+            }
+        }
+
+        if (isstr) u_strcat(buf16, u"'");
         u_strcat(buf16, temp);
+        if (isstr) u_strcat(buf16, u"'");
         free(temp);
         if (--num_left > 0) {
             u_strcat(buf16, u",");
@@ -152,12 +164,14 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
 
 int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list)
 {
-    return cq_fields_to_utf8(buf, buflen, list.fieldc, list.fieldnames);
+    return cq_fields_to_utf8(buf, buflen, list.fieldc, list.fieldnames,
+            false);
 }
 
 int cq_drow_to_utf8(char *buf, size_t buflen, struct drow row)
 {
-    return cq_fields_to_utf8(buf, buflen, row.fieldc, row.values);
+    return cq_fields_to_utf8(buf, buflen, row.fieldc, row.values,
+            true);
 }
 
 struct dbconn cq_new_connection(const char *host, const char *user,
@@ -418,28 +432,29 @@ int cq_dlist_remove_field_at(struct dlist *list, size_t index)
     if (index >= list->fieldc)
         return 2;
 
+    if (!strcmp(list->fieldnames[index], list->primkey)) {
+        free(list->primkey);
+        list->primkey = NULL;
+    }
+
     for (struct drow *row = list->first; row != NULL; row = row->next) {
         for (size_t i = index; i < row->fieldc; ++i) {
             if (i == (row->fieldc - 1)) {
                 --row->fieldc;
+                free(row->values[i]);
             } else {
-                row->values[i] = row->values[i+1];
+                strcpy(row->values[i], row->values[i+1]);
             }
-            free(row->values[i]);
         }
     }
 
     for (size_t i = index; i < list->fieldc; ++i) {
         if (i == (list->fieldc - 1)) {
             --list->fieldc;
+            free(list->fieldnames[i]);
         } else {
-            list->fieldnames[i] = list->fieldnames[i+1];
+            strcpy(list->fieldnames[i], list->fieldnames[i+1]);
         }
-        free(list->fieldnames[i]);
-    }
-
-    if (!strcmp(list->fieldnames[index], list->primkey)) {
-        free(list->primkey);
     }
 
     return 0;
@@ -939,6 +954,73 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
     /* 5th column is documented to be the column name */
     strncpy(out, row[4], len);
     mysql_free_result(result);
+
+    return 0;
+}
+
+int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
+        char **out_names, size_t nblen)
+{
+    int rc;
+    char *query;
+    const char *fmt = u8"SHOW COLUMNS IN %s";
+
+    if (table == NULL)
+        return 1;
+    
+    bool getting_names = !(out_names == NULL);
+    bool getting_count = !(out_fieldc == NULL);
+
+    UChar *tempq = calloc(CQ_QLEN, sizeof(UChar));
+    if (tempq == NULL)
+        return -1;
+    rc = u_snprintf(tempq, CQ_QLEN, fmt, table);
+    if ((size_t) rc >= CQ_QLEN) {
+        free(tempq);
+        return 100;
+    }
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (query == NULL) {
+        free(tempq);
+        return -2;
+    }
+
+    UErrorCode status = U_ZERO_ERROR;
+    u_strToUTF8(query, CQ_QLEN, NULL, tempq, u_strlen(tempq), &status);
+    free(tempq);
+    if (!U_SUCCESS(status)) {
+        free(query);
+        return 101;
+    }
+
+    rc = cq_connect(&con);
+    if (rc) {
+        free(query);
+        return 200;
+    }
+
+    rc = mysql_query(con.con, query);
+    free(query);
+    if (rc)
+        return 201;
+
+    MYSQL_RES *result = mysql_store_result(con.con);
+    cq_close_connection(&con);
+    if (result == NULL)
+        return 202;
+
+    MYSQL_ROW row;
+    size_t num_rows = 0;
+    while ((row = mysql_fetch_row(result))) {
+        if (getting_names)
+            strncpy(out_names[num_rows], row[0], nblen);
+        ++num_rows;
+    }
+    mysql_free_result(result);
+
+    if (getting_count)
+        *out_fieldc = num_rows;
 
     return 0;
 }

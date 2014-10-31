@@ -256,6 +256,9 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
 int cq_get_primkey(struct dbconn con, const char *table, char *out,
         size_t len);
 
+int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
+        char **out_names, size_t nblen);
+
 #ifdef __cplusplus
 }
 #endif
