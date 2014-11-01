@@ -46,7 +46,7 @@ API outline on [Delwink's website][6], or you can generate it yourself with
 
     $ doxygen Doxyfile
 
-if you have doxygen installed.
+if you have doxygen installed. The files are placed in `doc/api`.
 
 License
 -------
