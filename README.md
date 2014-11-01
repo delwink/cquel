@@ -38,6 +38,16 @@ library with
 Alternatively, all the compiled libraries are placed in `.libs` on success,
 including the static one.
 
+API
+---
+
+You can read a basic tutorial in [doc/api.md][5], you can read the official
+API outline on [Delwink's website][6], or you can generate it yourself with
+
+    $ doxygen Doxyfile
+
+if you have doxygen installed.
+
 License
 -------
 
@@ -49,3 +59,5 @@ License. See [COPYING][4] for more details.
 [2]: doc/build.md
 [3]: http://gnu.org/philosophy/free-sw.html
 [4]: COPYING
+[5]: doc/api.md
+[6]: http://delwink.com/software/apidocs/cquel
