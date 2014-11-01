@@ -255,6 +255,17 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
 int cq_get_primkey(struct dbconn con, const char *table, char *out,
         size_t len);
 
+/**
+ * @brief Gets information about the fields in a database table.
+ * @param con Database connection object with connection details.
+ * @param table UTF-8 string matching the name of the table to be examined.
+ * @param out_fieldc Destination for the number of fields; can be NULL.
+ * @param out_names Destination for the field names; can be NULL.
+ * @param nblen The length of each buffer in out_names.
+ * @return 0 on success; less than 0 if memory error; from to to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query; 202-299 if error parsing data.
+ */
 int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
         char **out_names, size_t nblen);
 
