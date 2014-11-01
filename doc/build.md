@@ -17,10 +17,11 @@ The following commands must be executed from the root of the repository
 Dependencies
 ------------
 
-Library        | Description                                  | Purpose
--------------- | -------------------------------------------- | ---------------------
-MariaDB Client | MariaDB client tools                         | Database Connectivity
-ICU            | International Components for Unicode library | Unicode Support
+Library         | Description                                  | Purpose
+--------------- | -------------------------------------------- | ---------------------
+MariaDB Client  | MariaDB client tools                         | Database Connectivity
+MariaDB Library | MariaDB database development files           | Compiler flags
+ICU             | International Components for Unicode library | Unicode Support
 
 Dependency Build Instructions: Debian and Trisquel
 --------------------------------------------------
@@ -29,7 +30,7 @@ Build requirements:
 
     # apt-get install build-essential pkg-config
     # apt-get install libtool autotools-dev autoconf automake
-    # apt-get install mariadb-client libicu-dev
+    # apt-get install mariadb-client libmariadbclient-dev libicu-dev
 
 Dependency Build Instructions: Parabola
 ---------------------------------------
