@@ -1,0 +1,13 @@
+CFLAGS = -std=c11
+CXXFLAGS = --std=c++11
+
+prefix = /usr
+exec_prefix = ${prefix}
+libdir = ${exec_prefix}/lib
+includedir = ${prefix}/include
+
+Version: 0.0
+Cflags = -I${includedir}
+Description: Delwink MySQL C API wrapper with dynamic data structures
+Name: cquel
+Libs: -lcquel

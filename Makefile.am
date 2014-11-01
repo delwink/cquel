@@ -1,8 +1,10 @@
 ACLOCAL_AMFLAGS = -I m4 --install
 dist_doc_DATA = README.md
+licensedir = $(datadir)/licenses/$(PACKAGE_NAME)
+dist_license_DATA = COPYING
+pkgconfigdir = $(libdir)/pkgconfig
+dist_pkgconfig_DATA = cquel.pc
 include_HEADERS = cquel.h
-
-EXTRA_DIST = m4/NOTES
 
 lib_LTLIBRARIES = libcquel.la
 libcquel_la_LDFLAGS = -version-info 0:0:0
