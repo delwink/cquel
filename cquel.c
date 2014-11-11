@@ -336,7 +336,7 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
     }
 
     list->primkey = calloc(CQ_FMAXLEN, sizeof(char));
-    if (list->primkey == NULL)
+    if (list->primkey == NULL) {
         for (size_t j = 0; j < i; ++j)
             free(list->fieldnames[j]);
         free(list->fieldnames);
