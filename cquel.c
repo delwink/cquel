@@ -292,6 +292,11 @@ int cq_drow_set(struct drow *row, char **values)
 struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
         const char *primkey)
 {
+    if (fieldnames == NULL)
+        return NULL;
+    if (strlen(primkey) >= CQ_FMAXLEN)
+        return NULL;
+
     struct dlist *list = malloc(sizeof(struct dlist));
     if (list == NULL)
         return NULL;
@@ -306,6 +311,11 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
     size_t i;
     int rc = 0;
     for (i = 0; i < fieldc; ++i) {
+        if (fieldnames[i] == NULL) {
+            rc = 1;
+            break;
+        }
+
         if (strlen(fieldnames[i]) >= CQ_FMAXLEN) {
             rc = -1;
             break;
@@ -326,7 +336,7 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
     }
 
     list->primkey = calloc(CQ_FMAXLEN, sizeof(char));
-    if (list->primkey == NULL || strlen(primkey) >= CQ_FMAXLEN) {
+    if (list->primkey == NULL)
         for (size_t j = 0; j < i; ++j)
             free(list->fieldnames[j]);
         free(list->fieldnames);
