@@ -157,6 +157,14 @@ void cq_free_dlist(struct dlist *list);
 void cq_dlist_add(struct dlist *list, struct drow *row);
 
 /**
+ * @brief Copies 'src' dlist items appending them to 'dest'
+ * @param dest The list to append data to
+ * @param src The list to be appended
+ * @return Updated 'dest' or NULL on failure
+ */
+struct dlist *cq_dlist_append(struct dlist **dest, const struct dlist *src);
+
+/**
  * @brief Removes a row from a data list.
  * @param list The list from which to remove the row.
  * @param row The row to be removed.
