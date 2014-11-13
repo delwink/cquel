@@ -292,11 +292,6 @@ int cq_drow_set(struct drow *row, char **values)
 struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
         const char *primkey)
 {
-    if (fieldnames == NULL)
-        return NULL;
-    if (strlen(primkey) >= CQ_FMAXLEN)
-        return NULL;
-
     struct dlist *list = malloc(sizeof(struct dlist));
     if (list == NULL)
         return NULL;
@@ -311,11 +306,6 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
     size_t i;
     int rc = 0;
     for (i = 0; i < fieldc; ++i) {
-        if (fieldnames[i] == NULL) {
-            rc = 1;
-            break;
-        }
-
         if (strlen(fieldnames[i]) >= CQ_FMAXLEN) {
             rc = -1;
             break;
@@ -336,7 +326,7 @@ struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
     }
 
     list->primkey = calloc(CQ_FMAXLEN, sizeof(char));
-    if (list->primkey == NULL) {
+    if (list->primkey == NULL || strlen(primkey) >= CQ_FMAXLEN) {
         for (size_t j = 0; j < i; ++j)
             free(list->fieldnames[j]);
         free(list->fieldnames);
@@ -393,6 +383,60 @@ void cq_dlist_add(struct dlist *list, struct drow *row)
         row->prev = list->last;
         list->last = row;
     }
+}
+
+static int dlist_meta_cmp(const struct dlist *a, const struct dlist *b)
+{
+	int rc = 0;
+	if (a->fieldc != b->fieldc)
+		return a->fieldc - b->fieldc;
+
+	if ( (rc = strcmp(a->primkey, b->primkey)) )
+		return rc;
+
+	for (size_t i=0; i < a->fieldc; ++i) {
+		if ( (rc = strcmp(a->fieldnames[i], b->fieldnames[i])) )
+			break;
+	}
+
+	return rc;
+}
+
+struct dlist *cq_dlist_append(struct dlist **dest, const struct dlist *src)
+{
+	if (!dest || !*dest || !src || dlist_meta_cmp(*dest, src) )
+		return NULL;
+
+	struct drow *copy = NULL;
+	struct drow *fallback = src->last;
+	unsigned char error = 0;
+
+	for (struct drow *iter = src->first; iter; iter=iter->next) {
+		if (NULL == (copy = cq_new_drow(src->fieldc)) ) {
+			error = 1;
+			break;
+		}
+
+		if (cq_drow_set(copy, iter->values)) {
+			error = 1;
+			break;
+		}
+
+		cq_dlist_add(*dest, copy);
+	}
+
+	if (error) {
+		if (copy)
+			cq_free_drow(copy);
+
+		for (struct drow *iter=fallback; iter; iter=iter->next) {
+			cq_free_drow(iter);
+		}
+
+		fallback->next = NULL;
+	}
+
+	return *dest;
 }
 
 void cq_dlist_remove(struct dlist *list, struct drow *row)
