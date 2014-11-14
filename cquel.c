@@ -33,7 +33,7 @@ void cq_init(size_t qlen, size_t fmaxlen)
     CQ_FMAXLEN = fmaxlen;
 }
 
-int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
+static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char **fieldnames, bool usequotes)
 {
     UChar *buf16;
@@ -90,7 +90,7 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
     return rc;
 }
 
-int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
+static int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
         struct drow row)
 {
     UChar *buf16;
@@ -168,13 +168,13 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
     return rc;
 }
 
-int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list)
+static int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list)
 {
     return cq_fields_to_utf8(buf, buflen, list.fieldc, list.fieldnames,
             false);
 }
 
-int cq_drow_to_utf8(char *buf, size_t buflen, struct drow row)
+static int cq_drow_to_utf8(char *buf, size_t buflen, struct drow row)
 {
     return cq_fields_to_utf8(buf, buflen, row.fieldc, row.values,
             true);
