@@ -971,10 +971,14 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
     }
 
     /* 5th column is documented to be the column name */
-    strncpy(out, row[4], len);
+    rc = 0;
+    if (strlen(row[4]) >= len)
+        rc = 204;
+    else
+        strcpy(out, row[4]);
     mysql_free_result(result);
 
-    return 0;
+    return rc;
 }
 
 int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
@@ -1031,9 +1035,15 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
 
     MYSQL_ROW row;
     size_t num_rows = 0;
+    rc = 0;
     while ((row = mysql_fetch_row(result))) {
-        if (getting_names)
-            strncpy(out_names[num_rows], row[0], nblen);
+        if (getting_names) {
+            if (strlen(row[0]) >= nblen) {
+                rc = 203;
+                break;
+            }
+            strcpy(out_names[num_rows], row[0]);
+        }
         ++num_rows;
     }
     mysql_free_result(result);
