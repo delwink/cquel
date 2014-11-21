@@ -395,6 +395,60 @@ void cq_dlist_add(struct dlist *list, struct drow *row)
     }
 }
 
+static int dlist_meta_cmp(const struct dlist *a, const struct dlist *b)
+{
+	int rc = 0;
+	if (a->fieldc != b->fieldc)
+		return a->fieldc - b->fieldc;
+
+	if ( (rc = strcmp(a->primkey, b->primkey)) )
+		return rc;
+
+	for (size_t i=0; i < a->fieldc; ++i) {
+		if ( (rc = strcmp(a->fieldnames[i], b->fieldnames[i])) )
+			break;
+	}
+
+	return rc;
+}
+
+struct dlist *cq_dlist_append(struct dlist **dest, const struct dlist *src)
+{
+	if (!dest || !*dest || !src || dlist_meta_cmp(*dest, src) )
+		return NULL;
+
+	struct drow *copy = NULL;
+	struct drow *fallback = src->last;
+	unsigned char error = 0;
+
+	for (struct drow *iter = src->first; iter; iter=iter->next) {
+		if (NULL == (copy = cq_new_drow(src->fieldc)) ) {
+			error = 1;
+			break;
+		}
+
+		if (cq_drow_set(copy, iter->values)) {
+			error = 1;
+			break;
+		}
+
+		cq_dlist_add(*dest, copy);
+	}
+
+	if (error) {
+		if (copy)
+			cq_free_drow(copy);
+
+		for (struct drow *iter=fallback; iter; iter=iter->next) {
+			cq_free_drow(iter);
+		}
+
+		fallback->next = NULL;
+	}
+
+	return *dest;
+}
+
 void cq_dlist_remove(struct dlist *list, struct drow *row)
 {
     if (list == NULL || row == NULL)
