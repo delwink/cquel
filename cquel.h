@@ -17,8 +17,8 @@
 
 /**
  * @file cquel.h
- * @version 0
- * @date 10/26/2014
+ * @version 1
+ * @date 11/26/2014
  * @author David McMackins II
  * @brief MySQL C API wrapper with dynamic data structures
  */
@@ -110,7 +110,7 @@ void cq_free_drow(struct drow *row);
  * match the structure of fieldnames in the parent list.
  * @return Nonzero if input error.
  */
-int cq_drow_set(struct drow *row, char **values);
+int cq_drow_set(struct drow *row, char * const *values);
 
 /**
  * @brief A double linked list of database rows with metadata.
@@ -133,7 +133,7 @@ struct dlist {
  * key; can be NULL if only inserting.
  * @return A pointer to the allocated memory for this list.
  */
-struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
+struct dlist *cq_new_dlist(size_t fieldc, char * const *fieldnames,
         const char *primkey);
 
 /**

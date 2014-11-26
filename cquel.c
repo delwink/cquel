@@ -263,7 +263,7 @@ void cq_free_drow(struct drow *row)
     free(row);
 }
 
-int cq_drow_set(struct drow *row, char **values)
+int cq_drow_set(struct drow *row, char * const *values)
 {
     if (row == NULL)
         return 1;
@@ -289,7 +289,7 @@ int cq_drow_set(struct drow *row, char **values)
     return 0;
 }
 
-struct dlist *cq_new_dlist(size_t fieldc, char **fieldnames,
+struct dlist *cq_new_dlist(size_t fieldc, char * const *fieldnames,
         const char *primkey)
 {
     if (fieldnames == NULL)
