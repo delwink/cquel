@@ -33,6 +33,12 @@ extern "C"
 {
 #endif
 
+/**
+ * @brief Gets the interface version.
+ * @return UTF-8 string of the cquel interface version.
+ */
+const char *cq_interface(void);
+
 void cq_init(size_t qlen, size_t fmaxlen);
 
 struct drow;
