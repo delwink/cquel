@@ -40,6 +40,12 @@ extern "C"
 const char *cq_interface(void);
 
 /**
+ * @brief Gets the software version.
+ * @return UTF-8 string of the cquel software version.
+ */
+const char *cq_version(void);
+
+/**
  * @brief Initializes the cquel library.
  * @param qlen Maximum length of the query strings used by cquel.
  * @param fmaxlen Length of the buffer for each field and value.
