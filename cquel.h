@@ -194,7 +194,7 @@ void cq_dlist_remove(struct dlist *list, struct drow *row);
  * @param field A UTF-8 string naming the field to be removed.
  * @return Nonzero if field not found.
  */
-int cq_dlist_remove_field_str(struct dlist *list, char *field);
+int cq_dlist_remove_field_str(struct dlist *list, const char *field);
 
 /**
  * @brief Removes a column from a data list by an index.

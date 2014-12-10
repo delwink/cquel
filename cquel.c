@@ -483,7 +483,7 @@ void cq_dlist_remove(struct dlist *list, struct drow *row)
     cq_free_drow(row);
 }
 
-int cq_dlist_remove_field_str(struct dlist *list, char *field)
+int cq_dlist_remove_field_str(struct dlist *list, const char *field)
 {
     size_t i;
     bool found = false;
