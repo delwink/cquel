@@ -27,16 +27,6 @@
 size_t CQ_QLEN = 0;
 size_t CQ_FMAXLEN = 0;
 
-const char *cq_interface()
-{
-    return u8"1";
-}
-
-const char *cq_version()
-{
-    return u8"0.4";
-}
-
 void cq_init(size_t qlen, size_t fmaxlen)
 {
     CQ_QLEN = qlen;
