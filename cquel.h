@@ -31,6 +31,8 @@
 #define CQ_INTERFACE "1"
 #define CQ_VERSION   "0.4"
 #define CQ_COPYRIGHT \
+"cquel - MySQL C API wrapper with dynamic data structures\n"\
+"Copyright (C) 2014 Delwink, LLC\n\n"\
 "This program is free software: you can redistribute it and/or modify\n"\
 "it under the terms of the GNU Affero General Public License as published by\n"\
 "the Free Software Foundation.\n\n"\
