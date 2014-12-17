@@ -29,7 +29,7 @@
 #include <mysql.h>
 
 #define CQ_INTERFACE "1"
-#define CQ_VERSION   "0.4"
+#define CQ_VERSION   "0.5"
 #define CQ_COPYRIGHT \
 "cquel - MySQL C API wrapper with dynamic data structures\n"\
 "Copyright (C) 2014 Delwink, LLC\n\n"\
