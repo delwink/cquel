@@ -49,14 +49,16 @@ static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         return -1;
 
     for (size_t i = 0; i < fieldc; ++i) {
+        bool escaped = fieldnames[i][0] == '\\';
+        const char *field = escaped ? &fieldnames[i][1] : fieldnames[i];
+
         UChar *temp = calloc(buflen, sizeof(UChar));
         if (temp == NULL) {
             rc = -2;
             break;
         }
 
-        u_strFromUTF8(temp, buflen, NULL, fieldnames[i], strlen(fieldnames[i]),
-                &status);
+        u_strFromUTF8(temp, buflen, NULL, field, strlen(field), &status);
         if (!U_SUCCESS(status)) {
             rc = 2;
             free(temp);
@@ -64,7 +66,7 @@ static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         }
 
         bool isstr = false;
-        if (usequotes) {
+        if (!escaped && usequotes) {
             for (int32_t j = 0; j < u_strlen(temp); ++j) {
                 if (!isdigit(temp[j])) {
                     isstr = true;
