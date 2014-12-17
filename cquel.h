@@ -139,7 +139,9 @@ void cq_free_drow(struct drow *row);
 /**
  * @brief Sets the values for each column in a row.
  * @param values An array of UTF-8 strings containing the data in the row; must
- * match the structure of fieldnames in the parent list.
+ * match the structure of fieldnames in the parent list; non-numeric values 
+ * which do not begin with '\\' will be surrounded with apostrophes in queries 
+ * to the database.
  * @return Nonzero if input error.
  */
 int cq_drow_set(struct drow *row, char * const *values);
