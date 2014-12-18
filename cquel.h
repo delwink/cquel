@@ -17,7 +17,7 @@
 
 /**
  * @file cquel.h
- * @version 1
+ * @version 2
  * @date 11/26/2014
  * @author David McMackins II
  * @brief MySQL C API wrapper with dynamic data structures
