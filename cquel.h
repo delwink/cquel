@@ -311,9 +311,29 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
 int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
         char **out_names, size_t nblen);
 
+/**
+ * Calls a stored database procedure with an array of arguments.
+ * @param con Database connection object with connection details.
+ * @param proc The name of the procedure to call (without parentheses).
+ * @param args UTF-8 string array of the arguments to the function; non-numeric
+ * values not prefixed with '\\' will be surrounded by apostrophes in the query.
+ * @param num_args The number of elements in args.
+ * @return 0 on success; less than 0 if memory error; from to to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query.
+ */
 int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
         size_t num_args);
 
+/**
+ * Calls a stored database procedure, deriving arguments from a drow structure.
+ * @param con Database connection object with connection details.
+ * @param proc The name of the procedure to call (without parentheses).
+ * @param row The drow structure containing the argument data.
+ * @return 0 on success; less than 0 if memory error; from to to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query;
+ */
 int cq_proc_drow(struct dbconn con, const char *proc, struct drow row);
 
 #ifdef __cplusplus
