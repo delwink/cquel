@@ -1107,15 +1107,15 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
 
     return 0;
 }
-/*
-int cq_func_arr(struct dbconn con, const char *routine, char * const *args,
+
+int cq_func_arr(struct dbconn con, const char *func, char * const *args,
         size_t num_args)
 {
-    int rc;
+    int rc = 0;
     char *query, *fargs;
     const char *fmt = u8"CALL %s(%s)";
 
-    if (NULL == routine || NULL == args)
+    if (NULL == func || NULL == args)
         return 1;
 
     query = calloc(CQ_QLEN, sizeof(char));
@@ -1129,6 +1129,30 @@ int cq_func_arr(struct dbconn con, const char *routine, char * const *args,
     }
 
     if (0 != num_args) {
-        rc = cq_fields_to_utf8(fargs, CQ_QLEN, num_args, 
+        rc = cq_fields_to_utf8(fargs, CQ_QLEN, num_args, args, true);
+        if (rc) {
+            free(query);
+            free(fargs);
+            return 100;
+        }
     }
-}*/
+
+    rc = snprintf(query, CQ_QLEN, fmt, func, fargs);
+    free(fargs);
+    if (CQ_QLEN <= (size_t)rc) {
+        free(query);
+        return 101;
+    }
+
+    rc = cq_connect(&con);
+    if (rc) {
+        free(query);
+        return 200;
+    }
+
+    rc = mysql_query(con.con, query);
+    free(query);
+
+    cq_close_connection(&con);
+    return rc;
+}
