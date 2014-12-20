@@ -34,7 +34,7 @@ void cq_init(size_t qlen, size_t fmaxlen)
 }
 
 static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
-        char **fieldnames, bool usequotes)
+        char * const *fieldnames, bool usequotes)
 {
     UChar *buf16;
     UErrorCode status = U_ZERO_ERROR;
@@ -1107,3 +1107,28 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
 
     return 0;
 }
+/*
+int cq_func_arr(struct dbconn con, const char *routine, char * const *args,
+        size_t num_args)
+{
+    int rc;
+    char *query, *fargs;
+    const char *fmt = u8"CALL %s(%s)";
+
+    if (NULL == routine || NULL == args)
+        return 1;
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (NULL == query)
+        return -1;
+
+    fargs = calloc(CQ_QLEN, sizeof(char));
+    if (NULL == fargs) {
+        free(query);
+        return -2;
+    }
+
+    if (0 != num_args) {
+        rc = cq_fields_to_utf8(fargs, CQ_QLEN, num_args, 
+    }
+}*/
