@@ -1156,3 +1156,8 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
     cq_close_connection(&con);
     return rc;
 }
+
+int cq_proc_drow(struct dbconn con, const char *proc, struct drow row)
+{
+    return cq_proc_arr(con, proc, row.values, row.fieldc);
+}
