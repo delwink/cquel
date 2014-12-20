@@ -311,10 +311,10 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
 int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
         char **out_names, size_t nblen);
 
-int cq_func_arr(struct dbconn con, const char *func, char * const *args,
+int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
         size_t num_args);
 
-int cq_func_drow(struct dbconn con, const char *func, struct drow row);
+int cq_proc_drow(struct dbconn con, const char *proc, struct drow row);
 
 #ifdef __cplusplus
 }

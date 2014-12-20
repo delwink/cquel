@@ -1108,14 +1108,14 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
     return 0;
 }
 
-int cq_func_arr(struct dbconn con, const char *func, char * const *args,
+int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
         size_t num_args)
 {
     int rc = 0;
     char *query, *fargs;
     const char *fmt = u8"CALL %s(%s)";
 
-    if (NULL == func || NULL == args)
+    if (NULL == proc || NULL == args)
         return 1;
 
     query = calloc(CQ_QLEN, sizeof(char));
@@ -1137,7 +1137,7 @@ int cq_func_arr(struct dbconn con, const char *func, char * const *args,
         }
     }
 
-    rc = snprintf(query, CQ_QLEN, fmt, func, fargs);
+    rc = snprintf(query, CQ_QLEN, fmt, proc, fargs);
     free(fargs);
     if (CQ_QLEN <= (size_t)rc) {
         free(query);
