@@ -311,6 +311,8 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
 int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
         char **out_names, size_t nblen);
 
+int cq_routine(struct dbconn con, const char *routine, char * const *args);
+
 #ifdef __cplusplus
 }
 #endif
