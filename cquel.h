@@ -284,6 +284,12 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *query);
 int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
         const char *conditions);
 
+int cq_select_func_arr(struct dbconn con, const char *func, char * const *args,
+        size_t num_args, struct dlist **out);
+
+int cq_select_func_drow(struct dbconn con, const char *func, struct drow row,
+        struct dlist **out);
+
 /**
  * @brief Gets the name of the primary key of a database table.
  * @param con Database connection object with connection details.
@@ -335,12 +341,6 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
  * error; 201 if error submitting query;
  */
 int cq_proc_drow(struct dbconn con, const char *proc, struct drow row);
-
-int cq_func_arr(struct dbconn con, const char *func, char * const *args,
-        size_t num_args, struct dlist **out);
-
-int cq_func_drow(struct dbconn con, const char *func, char * const *args,
-        size_t num_args, struct dlist **out);
 
 #ifdef __cplusplus
 }
