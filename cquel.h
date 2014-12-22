@@ -336,6 +336,12 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
  */
 int cq_proc_drow(struct dbconn con, const char *proc, struct drow row);
 
+int cq_func_arr(struct dbconn con, const char *func, char * const *args,
+        size_t num_args, struct dlist **out);
+
+int cq_func_drow(struct dbconn con, const char *func, char * const *args,
+        size_t num_args, struct dlist **out);
+
 #ifdef __cplusplus
 }
 #endif
