@@ -944,29 +944,6 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
     if (query == NULL)
         return -10;
 
-/*
-    UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
-    if (buf16 == NULL) {
-        free(query);
-        return -11;
-    }
-
-    rc = u_snprintf(buf16, CQ_QLEN, fmt, table, conditions);
-    if ((size_t) rc >= CQ_QLEN) {
-        free(query);
-        free(buf16);
-        return 100;
-    }
-
-    UErrorCode status = U_ZERO_ERROR;
-    u_strToUTF8(query, CQ_QLEN, NULL, buf16, u_strlen(buf16), &status);
-    free(buf16);
-    if (!U_SUCCESS(status)) {
-        free(query);
-        return 101;
-    }
-*/
-
     rc = snprintf(query, CQ_QLEN, fmt, table, conditions);
     if (CQ_QLEN <= (size_t)rc) {
         free(query);
