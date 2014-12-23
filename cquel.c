@@ -17,8 +17,6 @@
 
 #include <my_global.h>
 #include <string.h>
-#include <unicode/ustdio.h>
-#include <unicode/ustring.h>
 #include <stdbool.h>
 #include <ctype.h>
 
@@ -36,76 +34,45 @@ void cq_init(size_t qlen, size_t fmaxlen)
 static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char * const *fieldnames, bool usequotes)
 {
-    UChar *buf16;
-    UErrorCode status = U_ZERO_ERROR;
-    size_t num_left = fieldc;
     int rc = 0;
+    size_t num_left = fieldc;
 
     if (num_left == 0)
         return 1;
-
-    buf16 = calloc(buflen, sizeof(UChar));
-    if (buf16 == NULL)
-        return -1;
 
     for (size_t i = 0; i < fieldc; ++i) {
         bool escaped = fieldnames[i][0] == '\\';
         const char *field = escaped ? &fieldnames[i][1] : fieldnames[i];
 
-        UChar *temp = calloc(buflen, sizeof(UChar));
-        if (temp == NULL) {
-            rc = -2;
-            break;
-        }
-
-        u_strFromUTF8(temp, buflen, NULL, field, strlen(field), &status);
-        if (!U_SUCCESS(status)) {
-            rc = 2;
-            free(temp);
-            break;
-        }
-
         bool isstr = false;
         if (!escaped && usequotes) {
-            for (int32_t j = 0; j < u_strlen(temp); ++j) {
-                if (!isdigit(temp[j])) {
+            for (size_t j = 0; j < strlen(field); ++j) {
+                if (!isdigit(field[j])) {
                     isstr = true;
                     break;
                 }
             }
         }
 
-        if (isstr) u_strcat(buf16, u"'");
-        u_strcat(buf16, temp);
-        if (isstr) u_strcat(buf16, u"'");
-        free(temp);
+        if (isstr) strcat(buf, "'");
+        strcat(buf, field);
+        if (isstr) strcat(buf, "'");
         if (--num_left > 0) {
-            u_strcat(buf16, u",");
+            strcat(buf, ",");
         }
     }
 
-    u_strToUTF8(buf, buflen, NULL, buf16, u_strlen(buf16), &status);
-    if (!U_SUCCESS(status))
-        rc = 3;
-
-    free(buf16);
     return rc;
 }
 
 static int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
         struct drow row)
 {
-    UChar *buf16;
-    UErrorCode status = U_ZERO_ERROR;
-    size_t num_left = list.fieldc;
     int rc = 0;
+    size_t num_left = list.fieldc;
 
     if (num_left == 0)
         return 1;
-
-    buf16 = calloc(buflen, sizeof(UChar));
-    if (buf16 == NULL)
-        return -2;
 
     for (size_t i = 0; i < list.fieldc; ++i) {
         if (!strcmp(list.fieldnames[i], list.primkey)) {
@@ -113,60 +80,21 @@ static int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
             continue;
         }
 
-        UChar *ftemp = calloc(buflen, sizeof(UChar));
-        if (ftemp == NULL) {
-            rc = -3;
-            break;
-        }
-
-        UChar *vtemp = calloc(buflen, sizeof(UChar));
-        if (vtemp == NULL) {
-            rc = -4;
-            free(ftemp);
-            break;
-        }
-
-        u_strFromUTF8(ftemp, buflen, NULL, list.fieldnames[i],
-                strlen(list.fieldnames[i]), &status);
-        if (!U_SUCCESS(status)) {
-            rc = 2;
-            free(ftemp);
-            free(vtemp);
-            break;
-        }
-
-        u_strFromUTF8(vtemp, buflen, NULL, row.values[i], strlen(row.values[i]),
-                &status);
-        if (!U_SUCCESS(status)) {
-            rc = 3;
-            free(ftemp);
-            free(vtemp);
-            break;
-        }
-
         bool isstr = false;
-        for (int32_t j = 0; j < u_strlen(vtemp); ++j)
-            if (!isdigit(vtemp[j]))
+        for (size_t j = 0; j < strlen(row.values[i]); ++j)
+            if (!isdigit(row.values[i][j]))
                 isstr = true;
 
-        u_strcat(buf16, ftemp);
-        u_strcat(buf16, u"=");
-        if (isstr) u_strcat(buf16, u"'");
-        u_strcat(buf16, vtemp);
-        if (isstr) u_strcat(buf16, u"'");
-
-        free(ftemp);
-        free(vtemp);
+        strcat(buf, list.fieldnames[i]);
+        strcat(buf, "=");
+        if (isstr) strcat(buf, "'");
+        strcat(buf, row.values[i]);
+        if (isstr) strcat(buf, "'");
 
         if (--num_left > 0)
-            u_strcat(buf16, u",");
+            strcat(buf, ",");
     }
 
-    u_strToUTF8(buf, buflen, NULL, buf16, u_strlen(buf16), &status);
-    if (!U_SUCCESS(status))
-        rc = 4;
-
-    free(buf16);
     return rc;
 }
 
@@ -615,24 +543,9 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
         if (rc)
             break;
 
-        UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
-        if (buf16 == NULL) {
+        rc = snprintf(query, CQ_QLEN, fmt, table, columns, values);
+        if (CQ_QLEN <= (size_t) rc) {
             rc = -4;
-            break;
-        }
-        rc = u_snprintf(buf16, CQ_QLEN, fmt, table, columns, values);
-        if ((size_t) rc >= CQ_QLEN) {
-            free(buf16);
-            rc = -5;
-            break;
-        }
-        rc = 0;
-
-        UErrorCode status = U_ZERO_ERROR;
-        u_strToUTF8(query, CQ_QLEN, NULL, buf16, u_strlen(buf16), &status);
-        free(buf16);
-        if (!U_SUCCESS(status)) {
-            rc = -1;
             break;
         }
 
@@ -734,45 +647,10 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *q)
     if (query == NULL)
         return -1;
 
-    UChar *tempquery, *tempq;
-    UErrorCode status = U_ZERO_ERROR;
-
-    tempq = calloc(CQ_QLEN, sizeof(UChar));
-    if (tempq == NULL) {
+    rc = snprintf(query, CQ_QLEN, "SELECT %s", q);
+    if (CQ_QLEN <= (size_t) rc) {
         free(query);
-        return -2;
-    }
-
-    u_strFromUTF8(tempq, CQ_QLEN, NULL, q, strlen(q), &status);
-    if (!U_SUCCESS(status)) {
-        free(query);
-        free(tempq);
-        return 101;
-    }
-
-    tempquery = calloc(CQ_QLEN, sizeof(UChar));
-    if (tempquery == NULL) {
-        free(query);
-        free(tempq);
-        return 102;
-    }
-
-    rc = u_snprintf_u(tempquery, CQ_QLEN, u"SELECT %S", tempq);
-    if ((size_t) rc >= CQ_QLEN) {
-        free(query);
-        free(tempq);
-        free(tempquery);
-        return 103;
-    }
-
-    u_strToUTF8(query, CQ_QLEN, NULL, tempquery, u_strlen(tempquery), &status);
-
-    free(tempq);
-    free(tempquery);
-
-    if (!U_SUCCESS(status)) {
-        free(query);
-        return 104;
+        return 100;
     }
 
     rc = cq_connect(&con);
@@ -966,25 +844,10 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
     if (query == NULL)
         return -20;
 
-    UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
-    if (buf16 == NULL) {
-        free(query);
-        return -21;
-    }
-
-    rc = u_snprintf(buf16, CQ_QLEN, fmt, table);
-    if ((size_t) rc >= CQ_QLEN) {
-        free(buf16);
+    rc = snprintf(query, CQ_QLEN, fmt, table);
+    if (CQ_QLEN <= (size_t) rc) {
         free(query);
         return 100;
-    }
-
-    UErrorCode status = U_ZERO_ERROR;
-    u_strToUTF8(query, CQ_QLEN, NULL, buf16, u_strlen(buf16), &status);
-    free(buf16);
-    if (!U_SUCCESS(status)) {
-        free(query);
-        return 101;
     }
 
     rc = cq_connect(&con);
@@ -1035,27 +898,15 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
     bool getting_names = !(out_names == NULL);
     bool getting_count = !(out_fieldc == NULL);
 
-    UChar *tempq = calloc(CQ_QLEN, sizeof(UChar));
-    if (tempq == NULL)
-        return -1;
-    rc = u_snprintf(tempq, CQ_QLEN, fmt, table);
-    if ((size_t) rc >= CQ_QLEN) {
-        free(tempq);
-        return 100;
-    }
-
     query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL) {
-        free(tempq);
-        return -2;
+        return -1;
     }
 
-    UErrorCode status = U_ZERO_ERROR;
-    u_strToUTF8(query, CQ_QLEN, NULL, tempq, u_strlen(tempq), &status);
-    free(tempq);
-    if (!U_SUCCESS(status)) {
+    rc = snprintf(query, CQ_QLEN, fmt, table);
+    if (CQ_QLEN <= (size_t) rc) {
         free(query);
-        return 101;
+        return 100;
     }
 
     rc = cq_connect(&con);

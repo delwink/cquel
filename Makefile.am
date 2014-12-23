@@ -7,7 +7,7 @@ include_HEADERS = cquel.h
 lib_LTLIBRARIES = libcquel.la
 libcquel_la_LDFLAGS = -version-info 3:0:1
 libcquel_la_SOURCES = cquel.c
-libcquel_la_CFLAGS = -Wall -Wextra -std=c11 `pkg-config --libs --cflags icu-uc icu-io` `mysql_config --cflags --libs`
+libcquel_la_CFLAGS = -Wall -Wextra -std=c11 `mysql_config --cflags --libs`
 
 AM_CFLAGS = $(DEPS_CFLAGS)
 AM_LIBS = $(DEPS_LIBS)

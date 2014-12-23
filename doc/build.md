@@ -21,7 +21,6 @@ Library         | Description                                  | Purpose
 --------------- | -------------------------------------------- | ---------------------
 MariaDB Client  | MariaDB client tools                         | Database Connectivity
 MariaDB Library | MariaDB database development files           | Compiler flags
-ICU             | International Components for Unicode library | Unicode Support
 
 Dependency Build Instructions: Debian and Trisquel
 --------------------------------------------------
@@ -31,7 +30,7 @@ Build requirements:
     # apt-get install build-essential pkg-config
     # apt-get install libtool autotools-dev autoconf automake
     # # need some mysql things while Debian is broken
-    # apt-get install libmariadb2 libmysqlclient-dev libicu-dev
+    # apt-get install libmariadb2 libmysqlclient-dev
 
 Dependency Build Instructions: Parabola
 ---------------------------------------
@@ -39,4 +38,4 @@ Dependency Build Instructions: Parabola
 Build requirements:
 
     # pacman -S base-devel
-    # pacman -S mariadb-clients icu
+    # pacman -S mariadb-clients
