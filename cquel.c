@@ -80,15 +80,24 @@ static int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
             continue;
         }
 
+        bool v_escaped = row.values[i][0] == '\\';
+        const char *tempv = v_escaped ?
+                &row.values[i][1] : row.values[i];
+
         bool isstr = false;
-        for (size_t j = 0; j < strlen(row.values[i]); ++j)
-            if (!isdigit(row.values[i][j]))
-                isstr = true;
+        if (!v_escaped) {
+            for (size_t j = 0; j < strlen(tempv); ++j) {
+                if (!isdigit(tempv[j])) {
+                    isstr = true;
+                    break;
+                }
+            }
+        }
 
         strcat(buf, list.fieldnames[i]);
         strcat(buf, "=");
         if (isstr) strcat(buf, "'");
-        strcat(buf, row.values[i]);
+        strcat(buf, tempv);
         if (isstr) strcat(buf, "'");
 
         if (--num_left > 0)
