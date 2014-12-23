@@ -489,12 +489,9 @@ struct drow *cq_dlist_at(struct dlist *list, size_t index)
 {
     if (list == NULL)
         return NULL;
-    struct drow *row = list->first;
-    while (row != NULL) {
+    for (struct drow *row = list->first; row != NULL; row = row->next)
         if (index-- == 0)
             return row;
-        row = row->next;
-    }
     return NULL;
 }
 
