@@ -943,6 +943,7 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
     if (query == NULL)
         return -10;
 
+/*
     UChar *buf16 = calloc(CQ_QLEN, sizeof(UChar));
     if (buf16 == NULL) {
         free(query);
@@ -962,6 +963,13 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
     if (!U_SUCCESS(status)) {
         free(query);
         return 101;
+    }
+*/
+
+    rc = snprintf(query, CQ_QLEN, fmt, table, conditions);
+    if (CQ_QLEN <= (size_t)rc) {
+        free(query);
+        return 100;
     }
 
     rc = cq_select_query(con, out, query);
