@@ -35,10 +35,14 @@ static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char * const *fieldnames, bool usequotes)
 {
     int rc = 0;
-    size_t num_left = fieldc;
+    size_t num_left = fieldc, written = 0;
 
     if (num_left == 0)
         return 1;
+
+    char *temp = calloc(CQ_FMAXLEN+3, sizeof(char));
+    if (NULL == temp)
+        return -1;
 
     for (size_t i = 0; i < fieldc; ++i) {
         bool escaped = fieldnames[i][0] == '\\';
@@ -54,14 +58,18 @@ static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
             }
         }
 
-        if (isstr) strcat(buf, "'");
-        strcat(buf, field);
-        if (isstr) strcat(buf, "'");
-        if (--num_left > 0) {
-            strcat(buf, ",");
+        const char *a = isstr ? "'" : "";
+        const char *c = --num_left > 0 ? "," : "";
+        written += snprintf(temp, CQ_FMAXLEN+3, "%s%s%s%s", a, field, a, c);
+        if (written >= buflen) {
+            rc = 2;
+            break;
         }
+            
+        strcat(buf, temp);
     }
 
+    free(temp);
     return rc;
 }
 
@@ -69,10 +77,14 @@ static int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
         struct drow row)
 {
     int rc = 0;
-    size_t num_left = list.fieldc;
+    size_t num_left = list.fieldc, written = 0;
 
     if (num_left == 0)
         return 1;
+
+    char *temp = calloc(CQ_FMAXLEN+3, sizeof(char));
+    if (NULL == temp)
+        return -1;
 
     for (size_t i = 0; i < list.fieldc; ++i) {
         if (!strcmp(list.fieldnames[i], list.primkey)) {
@@ -94,16 +106,20 @@ static int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
             }
         }
 
-        strcat(buf, list.fieldnames[i]);
-        strcat(buf, "=");
-        if (isstr) strcat(buf, "'");
-        strcat(buf, tempv);
-        if (isstr) strcat(buf, "'");
+        const char *a = isstr ? "'" : "";
+        const char *c = --num_left > 0 ? "," : "";
+        written += snprintf(temp, CQ_FMAXLEN+3, "%s=%s%s%s%s",
+                list.fieldnames[i],
+                a, tempv, a, c);
+        if (written >= buflen) {
+            rc = 2;
+            break;
+        }
 
-        if (--num_left > 0)
-            strcat(buf, ",");
+        strcat(buf, temp);
     }
 
+    free(temp);
     return rc;
 }
 
