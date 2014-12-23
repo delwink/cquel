@@ -374,16 +374,16 @@ struct dlist *cq_dlist_append(struct dlist **dest, const struct dlist *src)
 
 	struct drow *copy = NULL;
 	struct drow *fallback = src->last;
-	unsigned char error = 0;
+	bool error = false;
 
 	for (struct drow *iter = src->first; iter; iter=iter->next) {
 		if (NULL == (copy = cq_new_drow(src->fieldc)) ) {
-			error = 1;
+			error = true;
 			break;
 		}
 
 		if (cq_drow_set(copy, iter->values)) {
-			error = 1;
+			error = true;
 			break;
 		}
 
