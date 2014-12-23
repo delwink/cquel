@@ -936,15 +936,22 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
         const char *conditions)
 {
     int rc;
-    char query[CQ_QLEN];
+    char *query;
     const char *fmt = strcmp(conditions, u8"") ?
             u8"* FROM %s WHERE %s" : u8"* FROM %s%s";
 
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (query == NULL)
+        return -10;
+
     rc = snprintf(query, CQ_QLEN, fmt, table, conditions);
-    if (CQ_QLEN <= (size_t)rc)
+    if (CQ_QLEN <= (size_t)rc) {
+        free(query);
         return 100;
+    }
 
     rc = cq_select_query(con, out, query);
+    free(query);
     return rc;
 }
 
