@@ -696,8 +696,6 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *q)
     }
 
     char *from = strcasestr(query, u8"FROM") + strlen(u8"FROM");
-    /*while (isblank(*(++from)))
-        ;*/
     do {
         ++from;
     } while (isblank(*from) || *from == '\n');
