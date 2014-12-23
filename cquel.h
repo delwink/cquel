@@ -264,7 +264,7 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list);
  * @brief Pulls data from the database based on a SELECT query.
  * @param con Database connection object with connection details.
  * @param out An unallocated data list into which the data will be inserted.
- * @param query UTF-8 SQL to be appended to "SELECT ".
+ * @param q UTF-8 SQL to be appended to "SELECT ".
  * @return 0 on success; less than 0 if memory error; from 1 to 10 if input
  * error; from 100 to 199 if query setup error; 200 if database connection
  * error; 201 if error submitting query; 202-299 if error parsing data.
