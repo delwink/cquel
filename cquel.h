@@ -339,7 +339,7 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
         char **out_names, size_t nblen);
 
 /**
- * Calls a stored database procedure with an array of arguments.
+ * @brief Calls a stored database procedure with an array of arguments.
  * @param con Database connection object with connection details.
  * @param proc The name of the procedure to call (without parentheses).
  * @param args UTF-8 string array of the arguments to the function; non-numeric
@@ -353,7 +353,8 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
         size_t num_args);
 
 /**
- * Calls a stored database procedure, deriving arguments from a drow structure.
+ * @brief Calls a stored database procedure, deriving arguments from a drow 
+ * structure.
  * @param con Database connection object with connection details.
  * @param proc The name of the procedure to call (without parentheses).
  * @param row The drow structure containing the argument data.
