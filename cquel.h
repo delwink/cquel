@@ -284,9 +284,30 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *query);
 int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
         const char *conditions);
 
+/**
+ * @brief Populates a dlist with the return value of a basic function call.
+ * @param con Database connection object with connection details.
+ * @param func The name of the function to be called.
+ * @param args UTF-8 string array of the arguments to the function.
+ * @param num_args The number of arguments.
+ * @param out An unallocated data list into which the data will be inserted.
+ * @return 0 on success; less than 0 if memory error; from 1 to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query; 202-299 if error parsing data.
+ */
 int cq_select_func_arr(struct dbconn con, const char *func, char * const *args,
         size_t num_args, struct dlist **out);
 
+/**
+ * @brief Populates a dlist with the return value of a function call with 
+ * arguments derived from a drow structure.
+ * @param con Database connection object with connection details.
+ * @param func The name of the function to be called.
+ * @param row The drow structure containing the argument data.
+ * @return 0 on success; less than 0 if memory error; from 1 to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query; 202-299 if error parsing data.
+ */
 int cq_select_func_drow(struct dbconn con, const char *func, struct drow row,
         struct dlist **out);
 
