@@ -26,8 +26,6 @@
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
 
-#include <mysql.h>
-
 #define CQ_INTERFACE "3"
 #define CQ_VERSION   "3.0"
 #define CQ_COPYRIGHT \
@@ -73,7 +71,7 @@ struct drow;
  * @brief The universal database connection auxiliary structure for cquel.
  */
 struct dbconn {
-    MYSQL *con;
+    void *con;
     const char *host;
     const char *user;
     const char *passwd;
