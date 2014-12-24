@@ -520,7 +520,7 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
 {
     int rc;
     char *query, *columns, *values;
-    const char *fmt = u8"INSERT INTO %s(%s) VALUES(%s)";
+    const char *fmt = "INSERT INTO %s(%s) VALUES(%s)";
 
     if (table == NULL)
         return 1;
@@ -589,7 +589,7 @@ int cq_update(struct dbconn con, const char *table, struct dlist *list)
 {
     int rc;
     char *query, *columns;
-    const char *fmt = u8"UPDATE %s SET %s WHERE %s=%s";
+    const char *fmt = "UPDATE %s SET %s WHERE %s=%s";
 
     if (table == NULL)
         return 1;
@@ -836,7 +836,7 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
     int rc;
     char *query;
     const char *fmt = strcmp(conditions, u8"") ?
-            u8"* FROM %s WHERE %s" : u8"* FROM %s%s";
+            "* FROM %s WHERE %s" : u8"* FROM %s%s";
 
     query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL)
@@ -858,7 +858,7 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
 {
     int rc;
     char *query;
-    const char *fmt = u8"SHOW KEYS FROM %s WHERE Key_name = 'PRIMARY'";
+    const char *fmt = "SHOW KEYS FROM %s WHERE Key_name = 'PRIMARY'";
 
     query = calloc(CQ_QLEN, sizeof(char));
     if (query == NULL)
@@ -910,7 +910,7 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
 {
     int rc;
     char *query;
-    const char *fmt = u8"SHOW COLUMNS IN %s";
+    const char *fmt = "SHOW COLUMNS IN %s";
 
     if (table == NULL)
         return 1;
@@ -971,7 +971,7 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
 {
     int rc = 0;
     char *query, *fargs;
-    const char *fmt = u8"CALL %s(%s)";
+    const char *fmt = "CALL %s(%s)";
 
     if (NULL == proc || NULL == args)
         return 1;
