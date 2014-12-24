@@ -853,6 +853,47 @@ int cq_select_all(struct dbconn con, const char *table, struct dlist **out,
     return rc;
 }
 
+int cq_select_func_arr(struct dbconn con, const char *func, char * const *args,
+        size_t num_args, struct dlist **out)
+{
+    int rc;
+    char *query, *fargs;
+    const char *fmt = "%s(%s)";
+
+    if (NULL == func || NULL == args)
+        return 1;
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (NULL == query)
+        return -1;
+
+    fargs = calloc(CQ_QLEN, sizeof(char));
+    if (NULL == fargs) {
+        free(query);
+        return -2;
+    }
+
+    if (0 != num_args) {
+        rc = cq_fields_to_utf8(fargs, CQ_QLEN, num_args, args, true);
+        if (rc) {
+            free(query);
+            free(fargs);
+            return 110;
+        }
+    }
+
+    rc = snprintf(query, CQ_QLEN, fmt, func, fargs);
+    free(fargs);
+    if (CQ_QLEN <= (size_t) rc) {
+        free(query);
+        return 111;
+    }
+
+    rc = cq_select_query(con, out, query);
+    free(query);
+    return rc;
+}
+
 int cq_get_primkey(struct dbconn con, const char *table, char *out,
         size_t len)
 {
