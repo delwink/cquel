@@ -44,6 +44,9 @@ static int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
     if (NULL == temp)
         return -1;
 
+    /* prevent appending to buffer */
+    buf[0] = '\0';
+
     for (size_t i = 0; i < fieldc; ++i) {
         bool escaped = fieldnames[i][0] == '\\';
         const char *field = escaped ? &fieldnames[i][1] : fieldnames[i];
@@ -85,6 +88,9 @@ static int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
     char *temp = calloc(CQ_FMAXLEN+3, sizeof(char));
     if (NULL == temp)
         return -1;
+
+    /* prevent appending to buffer */
+    buf[0] = '\0';
 
     for (size_t i = 0; i < list.fieldc; ++i) {
         if (!strcmp(list.fieldnames[i], list.primkey)) {
