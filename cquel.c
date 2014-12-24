@@ -894,6 +894,12 @@ int cq_select_func_arr(struct dbconn con, const char *func, char * const *args,
     return rc;
 }
 
+int cq_select_func_drow(struct dbconn con, const char *func, struct drow row,
+        struct dlist **out)
+{
+    return cq_select_func_arr(con, func, row.values, row.fieldc, out);
+}
+
 int cq_get_primkey(struct dbconn con, const char *table, char *out,
         size_t len)
 {
