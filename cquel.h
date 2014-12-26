@@ -361,9 +361,33 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
  */
 int cq_proc_drow(struct dbconn con, const char *proc, struct drow row);
 
+/**
+ * @brief Grants permissions on a table or routine to a user.
+ * @param con Database connection object with connection details.
+ * @param perms Comma-separated list of permissions to be granted.
+ * @param table The table or routine on which to grant permission.
+ * @param user The database user to which to grant permission.
+ * @param host The connection hostname or IP address for the user.
+ * @param extra Any other additions to the query, such as a WITH statement.
+ * @return 0 on success; less than 0 if memory error; from to to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query;
+ */
 int cq_grant(struct dbconn con, const char *perms, const char *table,
         const char *user, const char *host, const char *extra);
 
+/**
+ * @brief Revokes permissions on a table or routine from a user.
+ * @param con Database connection object with connection details.
+ * @param perms Comma-separated list of permissions to be revoked.
+ * @param table The table or routine on which to revoke permission.
+ * @param user The database user from which to revoke permission.
+ * @param host The connection hostname or IP address for the user.
+ * @param extra Any other additions to the query, such as a WITH statement.
+ * @return 0 on success; less than 0 if memory error; from to to 10 if input
+ * error; from 100 to 199 if query setup error; 200 if database connection
+ * error; 201 if error submitting query;
+ */
 int cq_revoke(struct dbconn con, const char *perms, const char *table,
         const char *user, const char *host, const char *extra);
 
