@@ -1066,7 +1066,7 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
     free(query);
 
     cq_close_connection(&con);
-    return rc;
+    return rc ? 201 : 0;
 }
 
 int cq_proc_drow(struct dbconn con, const char *proc, struct drow row)
@@ -1113,7 +1113,7 @@ static int grant_revoke(struct dbconn con, const char *act, const char *perms,
 
     cq_close_connection(&con);
     free(query);
-    return rc;
+    return rc ? 201 : 0;
 }
 
 int cq_grant(struct dbconn con, const char *perms, const char *table,
