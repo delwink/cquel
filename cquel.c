@@ -1073,3 +1073,57 @@ int cq_proc_drow(struct dbconn con, const char *proc, struct drow row)
 {
     return cq_proc_arr(con, proc, row.values, row.fieldc);
 }
+
+static int grant_revoke(struct dbconn con, const char *act, const char *perms,
+        const char *table, const char *user, const char *host,
+        const char *extra)
+{
+    int rc;
+    char *query;
+    const char *fmt = "%s %s ON %s %s '%s'@'%s' %s";
+
+    if (NULL == act || NULL == perms || NULL == table || NULL == user
+            || NULL == host || NULL == extra)
+        return 1;
+
+    query = calloc(CQ_QLEN, sizeof(char));
+    if (NULL == query)
+        return -1;
+
+    rc = snprintf(query, CQ_QLEN, fmt,
+            act,
+            perms,
+            table,
+            strcmp(act, u8"GRANT") ? u8"FROM" : u8"TO",
+            user,
+            host,
+            extra);
+    if (CQ_QLEN <= (size_t) rc) {
+        free(query);
+        return 100;
+    }
+
+    rc = cq_connect(&con);
+    if (rc) {
+        free(query);
+        return 200;
+    }
+
+    rc = mysql_query(con.con, query);
+
+    cq_close_connection(&con);
+    free(query);
+    return rc;
+}
+
+int cq_grant(struct dbconn con, const char *perms, const char *table,
+        const char *user, const char *host, const char *extra)
+{
+    return grant_revoke(con, u8"GRANT", perms, table, user, host, extra);
+}
+
+int cq_revoke(struct dbconn con, const char *perms, const char *table,
+        const char *user, const char *host, const char *extra)
+{
+    return grant_revoke(con, u8"REVOKE", perms, table, user, host, extra);
+}

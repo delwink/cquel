@@ -361,6 +361,12 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
  */
 int cq_proc_drow(struct dbconn con, const char *proc, struct drow row);
 
+int cq_grant(struct dbconn con, const char *perms, const char *table,
+        const char *user, const char *host, const char *extra);
+
+int cq_revoke(struct dbconn con, const char *perms, const char *table,
+        const char *user, const char *host, const char *extra);
+
 #ifdef __cplusplus
 }
 #endif
