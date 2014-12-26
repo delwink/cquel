@@ -17,8 +17,8 @@
 
 /**
  * @file cquel.h
- * @version 3
- * @date 12/24/2014
+ * @version 4
+ * @date 12/25/2014
  * @authors David McMackins II, Darcy Brás da Silva
  * @brief MySQL C API wrapper with dynamic data structures
  */
@@ -26,8 +26,8 @@
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
 
-#define CQ_INTERFACE "3"
-#define CQ_VERSION   "3.0"
+#define CQ_INTERFACE "4"
+#define CQ_VERSION   "4.0"
 #define CQ_COPYRIGHT \
 "cquel - MySQL C API wrapper with dynamic data structures\n"\
 "Copyright (C) 2014 Delwink, LLC\n\n"\
@@ -45,18 +45,6 @@
 extern "C"
 {
 #endif
-
-/**
- * @brief Gets the interface version.
- * @return UTF-8 string of the cquel interface version.
- */
-const char *cq_interface(void);
-
-/**
- * @brief Gets the software version.
- * @return UTF-8 string of the cquel software version.
- */
-const char *cq_version(void);
 
 /**
  * @brief Initializes the cquel library.
