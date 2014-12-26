@@ -26,8 +26,19 @@
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
 
+/**
+ * @brief The cquel interface version number.
+ */
 #define CQ_INTERFACE "4"
+
+/**
+ * @brief The cquel software version number.
+ */
 #define CQ_VERSION   "4.0"
+
+/**
+ * @brief Information about the cquel copyright holders and license.
+ */
 #define CQ_COPYRIGHT \
 "cquel - MySQL C API wrapper with dynamic data structures\n"\
 "Copyright (C) 2014 Delwink, LLC\n\n"\
