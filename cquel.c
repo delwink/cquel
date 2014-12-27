@@ -492,7 +492,7 @@ int cq_dlist_remove_field_at(struct dlist *list, size_t index)
     return 0;
 }
 
-struct drow *cq_dlist_at(struct dlist *list, size_t index)
+struct drow *cq_dlist_at(const struct dlist *list, size_t index)
 {
     if (list == NULL)
         return NULL;
@@ -502,7 +502,7 @@ struct drow *cq_dlist_at(struct dlist *list, size_t index)
     return NULL;
 }
 
-int cq_field_to_index(struct dlist *list, const char *field, size_t *out)
+int cq_field_to_index(const struct dlist *list, const char *field, size_t *out)
 {
     bool found = false;
 
@@ -523,7 +523,7 @@ int cq_field_to_index(struct dlist *list, const char *field, size_t *out)
     return !found;
 }
 
-int cq_insert(struct dbconn con, const char *table, struct dlist *list)
+int cq_insert(struct dbconn con, const char *table, const struct dlist *list)
 {
     int rc;
     char *query, *columns, *values;
@@ -592,7 +592,7 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list)
     return rc;
 }
 
-int cq_update(struct dbconn con, const char *table, struct dlist *list)
+int cq_update(struct dbconn con, const char *table, const struct dlist *list)
 {
     int rc;
     char *query, *columns;

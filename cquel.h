@@ -17,8 +17,8 @@
 
 /**
  * @file cquel.h
- * @version 4
- * @date 12/25/2014
+ * @version 4.1
+ * @date 12/27/2014
  * @authors David McMackins II, Darcy Brás da Silva
  * @brief MySQL C API wrapper with dynamic data structures
  */
@@ -34,7 +34,7 @@
 /**
  * @brief The cquel software version number.
  */
-#define CQ_VERSION   "4.0"
+#define CQ_VERSION   "4.1"
 
 /**
  * @brief Information about the cquel copyright holders and license.
@@ -224,7 +224,7 @@ int cq_dlist_remove_field_at(struct dlist *list, size_t index);
  * @param index Number indicating which element to get.
  * @return Pointer to the row at that index or NULL on failure.
  */
-struct drow *cq_dlist_at(struct dlist *list, size_t index);
+struct drow *cq_dlist_at(const struct dlist *list, size_t index);
 
 /**
  * @brief Gets the index of a data list field by name.
@@ -233,7 +233,7 @@ struct drow *cq_dlist_at(struct dlist *list, size_t index);
  * @param out The output variable into which to store the index.
  * @return Nonzero if input error or field not found.
  */
-int cq_field_to_index(struct dlist *list, const char *field, size_t *out);
+int cq_field_to_index(const struct dlist *list, const char *field, size_t *out);
 
 /**
  * @brief Inserts data into the database based on a data list.
@@ -244,7 +244,7 @@ int cq_field_to_index(struct dlist *list, const char *field, size_t *out);
  * error; from 100 to 199 if query setup error; 200 if database connection
  * error; 201 if error submitting query.
  */
-int cq_insert(struct dbconn con, const char *table, struct dlist *list);
+int cq_insert(struct dbconn con, const char *table, const struct dlist *list);
 
 /**
  * @brief Updates data in a database table based on a data list.
@@ -255,7 +255,7 @@ int cq_insert(struct dbconn con, const char *table, struct dlist *list);
  * error; from 100 to 199 if query setup error; 200 if database connection
  * error; 201 if error submitting query.
  */
-int cq_update(struct dbconn con, const char *table, struct dlist *list);
+int cq_update(struct dbconn con, const char *table, const struct dlist *list);
 
 /**
  * @brief Pulls data from the database based on a SELECT query.
