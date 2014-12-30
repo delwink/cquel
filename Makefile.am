@@ -5,8 +5,8 @@ dist_pkgconfig_DATA = cquel.pc
 
 include_HEADERS = cquel.h
 lib_LTLIBRARIES = libcquel.la
-libcquel_la_LDFLAGS = -version-info 5:0:1
-libcquel_la_SOURCES = cquel.c
+libcquel_la_LDFLAGS = -version-info 5:1:1
+libcquel_la_SOURCES = cquel.c cqstatic.c
 libcquel_la_CFLAGS = -Wall -Wextra -std=c11 `mysql_config --cflags --libs`
 
 AM_CFLAGS = $(DEPS_CFLAGS)
