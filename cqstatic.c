@@ -27,6 +27,24 @@
 extern size_t CQ_QLEN;
 extern size_t  CQ_FMAXLEN;
 
+static int inject(char *dest, const char *insert, size_t n, size_t pos)
+{
+    size_t addl = strlen(insert), newpos = pos+addl;
+
+    if (strlen(dest) == n-addl) /* going to overflow */
+        return 3;
+
+    char *temp = calloc(n, sizeof(char));
+
+    strncpy(temp, dest, pos);
+    strcpy(temp+pos, insert);
+    strcpy(temp+newpos, dest+pos);
+    strcpy(dest, temp);
+    free(temp);
+
+    return 0;
+}
+
 int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char * const *fieldnames, bool usequotes)
 {
@@ -57,6 +75,18 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
             }
         }
 
+        if (isstr) {
+            strcpy(temp, field);
+            for (size_t j = 0; j < strlen(temp); ++j) {
+                if (temp[j] == '\'')
+                    rc = inject(temp, "\\", CQ_FMAXLEN+3, j);
+                if (rc)
+                    break;
+            }
+        }
+        if (rc)
+            break;
+
         const char *a = isstr ? "'" : "";
         const char *c = --num_left > 0 ? "," : "";
         written += snprintf(temp, CQ_FMAXLEN+3, "%s%s%s%s", a, field, a, c);
@@ -64,7 +94,7 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
             rc = 2;
             break;
         }
-            
+
         strcat(buf, temp);
     }
 
@@ -107,6 +137,18 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
                 }
             }
         }
+
+        if (isstr) {
+            strcpy(temp, tempv);
+            for (size_t j = 0; j < strlen(temp); ++j) {
+                if (temp[j] == '\'')
+                    rc = inject(temp, "\\", CQ_FMAXLEN+3, j);
+                if (rc)
+                    break;
+            }
+        }
+        if (rc)
+            break;
 
         const char *a = isstr ? "'" : "";
         const char *c = --num_left > 0 ? "," : "";
