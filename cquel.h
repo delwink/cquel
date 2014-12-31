@@ -17,7 +17,7 @@
 
 /**
  * @file cquel.h
- * @version 4.4
+ * @version 4.5
  * @date 12/27/2014
  * @authors David McMackins II, Darcy Brás da Silva
  * @brief MySQL C API wrapper with dynamic data structures
@@ -36,7 +36,7 @@
 /**
  * @brief The cquel software version number.
  */
-#define CQ_VERSION   "4.4"
+#define CQ_VERSION   "4.5"
 
 /**
  * @brief Information about the cquel copyright holders and license.

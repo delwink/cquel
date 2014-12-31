@@ -149,9 +149,9 @@ int cq_drow_set(struct drow *row, char * const *values)
 struct dlist *cq_new_dlist(size_t fieldc, char * const *fieldnames,
         const char *primkey)
 {
+    bool hasprim = NULL != primkey;
+
     if (fieldnames == NULL)
-        return NULL;
-    if (strlen(primkey) >= CQ_FMAXLEN)
         return NULL;
 
     struct dlist *list = malloc(sizeof(struct dlist));
@@ -200,7 +200,8 @@ struct dlist *cq_new_dlist(size_t fieldc, char * const *fieldnames,
         free(list);
         return NULL;
     }
-    strcpy(list->primkey, primkey);
+    if (hasprim)
+        strcpy(list->primkey, primkey);
 
     list->first = NULL;
     list->last = NULL;

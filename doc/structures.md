@@ -9,7 +9,8 @@ to determine how to connect to the database.
 
 ``` c
 struct dbconn {
-    MYSQL *con;
+    void *con;
+    bool isopen;
     const char *host;
     const char *user;
     const char *passwd;
