@@ -37,6 +37,7 @@ struct dbconn cq_new_connection(const char *host, const char *user,
         const char *passwd, const char *database)
 {
     struct dbconn out = {
+        .isopen = false,
         .host = host,
         .user = user,
         .passwd = passwd,
@@ -54,12 +55,15 @@ int cq_connect(struct dbconn *con)
         return 1;
     }
 
+    con->isopen = true;
+
     return 0;
 }
 
 void cq_close_connection(struct dbconn *con)
 {
     mysql_close(con->con);
+    con->isopen = false;
 }
 
 int cq_test(struct dbconn con)

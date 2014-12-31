@@ -17,7 +17,7 @@
 
 /**
  * @file cquel.h
- * @version 4.1
+ * @version 4.4
  * @date 12/27/2014
  * @authors David McMackins II, Darcy Brás da Silva
  * @brief MySQL C API wrapper with dynamic data structures
@@ -25,6 +25,8 @@
 
 #ifndef DELWINK_CQUEL_H
 #define DELWINK_CQUEL_H
+
+#include <stdbool.h>
 
 /**
  * @brief The cquel interface version number.
@@ -34,7 +36,7 @@
 /**
  * @brief The cquel software version number.
  */
-#define CQ_VERSION   "4.3"
+#define CQ_VERSION   "4.4"
 
 /**
  * @brief Information about the cquel copyright holders and license.
@@ -71,6 +73,7 @@ struct drow;
  */
 struct dbconn {
     void *con;
+    bool isopen;
     const char *host;
     const char *user;
     const char *passwd;

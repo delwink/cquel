@@ -36,6 +36,7 @@ int cq_fields_to_utf8(struct dbconn *con, char *buf, size_t buflen,
         size_t fieldc, char * const *fieldnames, bool usequotes)
 {
     int rc = 0;
+    bool connecting = !con->isopen;
     size_t num_left = fieldc, written = 0;
 
     if (num_left == 0)
@@ -54,7 +55,8 @@ int cq_fields_to_utf8(struct dbconn *con, char *buf, size_t buflen,
     /* prevent appending to buffer */
     buf[0] = '\0';
 
-    cq_connect(con);
+    if (connecting)
+        cq_connect(con);
     for (size_t i = 0; i < fieldc; ++i) {
         bool escaped = fieldnames[i][0] == '\\';
         const char *orig = escaped ? &fieldnames[i][1] : fieldnames[i];
@@ -85,7 +87,8 @@ int cq_fields_to_utf8(struct dbconn *con, char *buf, size_t buflen,
 
         strcat(buf, temp);
     }
-    cq_close_connection(con);
+    if (connecting)
+        cq_close_connection(con);
 
     free(field);
     free(temp);
@@ -96,6 +99,7 @@ int cq_dlist_to_update_utf8(struct dbconn *con, char *buf, size_t buflen,
         struct dlist list, struct drow row)
 {
     int rc = 0;
+    bool connecting = !con->isopen;
     size_t num_left = list.fieldc, written = 0;
 
     if (num_left == 0)
@@ -121,6 +125,8 @@ int cq_dlist_to_update_utf8(struct dbconn *con, char *buf, size_t buflen,
     /* prevent appending to buffer */
     buf[0] = '\0';
 
+    if (connecting)
+        cq_connect(con);
     for (size_t i = 0; i < list.fieldc; ++i) {
         if (!strcmp(list.fieldnames[i], list.primkey)) {
             --num_left;
@@ -160,6 +166,8 @@ int cq_dlist_to_update_utf8(struct dbconn *con, char *buf, size_t buflen,
 
         strcat(buf, temp);
     }
+    if (connecting)
+        cq_close_connection(con);
 
     free(tempv);
     free(tempf);
