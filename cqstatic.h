@@ -15,6 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+int safe_query(struct dbconn con, const char *query);
+
 int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char * const *fieldnames, bool usequotes);
 

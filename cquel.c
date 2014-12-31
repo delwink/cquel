@@ -452,7 +452,7 @@ int cq_insert(struct dbconn con, const char *table, const struct dlist *list)
             break;
         }
 
-        rc = mysql_query(con.con, query);
+        rc = safe_query(con, query);
         if (rc) {
             rc = 201;
             break;
@@ -523,7 +523,7 @@ int cq_update(struct dbconn con, const char *table, const struct dlist *list)
             break;
         }
 
-        rc = mysql_query(con.con, query);
+        rc = safe_query(con, query);
         if (rc) {
             rc = 201;
             break;
@@ -562,7 +562,7 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *q)
         return 200;
     }
 
-    rc = mysql_query(con.con, query);
+    rc = safe_query(con, query);
     if (rc) {
         free(query);
         cq_close_connection(&con);
@@ -804,7 +804,7 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
         return 200;
     }
 
-    rc = mysql_query(con.con, query);
+    rc = safe_query(con, query);
     free(query);
     if (rc) {
         cq_close_connection(&con);
@@ -863,7 +863,7 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
         return 200;
     }
 
-    rc = mysql_query(con.con, query);
+    rc = safe_query(con, query);
     free(query);
     if (rc)
         return 201;
@@ -936,7 +936,7 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
         return 200;
     }
 
-    rc = mysql_query(con.con, query);
+    rc = safe_query(con, query);
     free(query);
 
     cq_close_connection(&con);

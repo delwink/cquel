@@ -27,11 +27,24 @@
 extern size_t CQ_QLEN;
 extern size_t  CQ_FMAXLEN;
 
+int safe_query(struct dbconn con, const char *query)
+{
+    size_t len = strlen(query) * 2 + sizeof(char);
+    char *s = calloc(len, sizeof(char));
+    if (NULL == s)
+        return -1;
+
+    mysql_real_escape_string(con.con, s, query, len);
+
+    return mysql_query(con.con, s);
+}
+
+/*
 static int inject(char *dest, const char *insert, size_t n, size_t pos)
 {
     size_t addl = strlen(insert), newpos = pos+addl;
 
-    if (strlen(dest) == n-addl) /* going to overflow */
+    if (strlen(dest) == n-addl)
         return 3;
 
     char *temp = calloc(n, sizeof(char));
@@ -46,6 +59,7 @@ static int inject(char *dest, const char *insert, size_t n, size_t pos)
 
     return 0;
 }
+*/
 
 int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         char * const *fieldnames, bool usequotes)
@@ -77,6 +91,7 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
             }
         }
 
+/*
         if (isstr) {
             strcpy(temp, field);
             for (size_t j = 0; j < strlen(temp); ++j) {
@@ -88,6 +103,7 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
         }
         if (rc)
             break;
+*/
 
         const char *a = isstr ? "'" : "";
         const char *c = --num_left > 0 ? "," : "";
@@ -140,6 +156,7 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
             }
         }
 
+/*
         if (isstr) {
             strcpy(temp, tempv);
             for (size_t j = 0; j < strlen(temp); ++j) {
@@ -151,6 +168,7 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
         }
         if (rc)
             break;
+*/
 
         const char *a = isstr ? "'" : "";
         const char *c = --num_left > 0 ? "," : "";
