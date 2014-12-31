@@ -35,6 +35,8 @@ static int inject(char *dest, const char *insert, size_t n, size_t pos)
         return 3;
 
     char *temp = calloc(n, sizeof(char));
+    if (NULL == temp)
+        return 4;
 
     strncpy(temp, dest, pos);
     strcpy(temp+pos, insert);
