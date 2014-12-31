@@ -15,17 +15,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-int safe_query(struct dbconn con, const char *query);
+int cq_query(struct dbconn *con, const char *query);
 
-int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
-        char * const *fieldnames, bool usequotes);
+int cq_fields_to_utf8(struct dbconn *con, char *buf, size_t buflen,
+        size_t fieldc, char * const *fieldnames, bool usequotes);
 
-int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
+int cq_dlist_to_update_utf8(struct dbconn *con, char *buf, size_t buflen,
+        struct dlist list, struct drow row);
+
+int cq_dlist_fields_to_utf8(struct dbconn *con, char *buf, size_t buflen,
+        struct dlist list);
+
+int cq_drow_to_utf8(struct dbconn *con, char *buf, size_t buflen,
         struct drow row);
-
-int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list);
-
-int cq_drow_to_utf8(char *buf, size_t buflen, struct drow row);
 
 int dlist_meta_cmp(const struct dlist *a, const struct dlist *b);
 

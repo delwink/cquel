@@ -425,7 +425,7 @@ int cq_insert(struct dbconn con, const char *table, const struct dlist *list)
         return -3;
     }
 
-    rc = cq_dlist_fields_to_utf8(columns, CQ_QLEN/2, *list);
+    rc = cq_dlist_fields_to_utf8(&con, columns, CQ_QLEN/2, *list);
     if (rc) {
         free(query);
         free(columns);
@@ -442,7 +442,7 @@ int cq_insert(struct dbconn con, const char *table, const struct dlist *list)
     }
 
     for (struct drow *r = list->first; r != NULL; r = r->next) {
-        rc = cq_drow_to_utf8(values, CQ_QLEN/2, *r);
+        rc = cq_drow_to_utf8(&con, values, CQ_QLEN/2, *r);
         if (rc)
             break;
 
@@ -452,7 +452,7 @@ int cq_insert(struct dbconn con, const char *table, const struct dlist *list)
             break;
         }
 
-        rc = safe_query(con, query);
+        rc = cq_query(&con, query);
         if (rc) {
             rc = 201;
             break;
@@ -510,7 +510,7 @@ int cq_update(struct dbconn con, const char *table, const struct dlist *list)
     }
 
     for (struct drow *r = list->first; r != NULL; r = r->next) {
-        rc = cq_dlist_to_update_utf8(columns, CQ_QLEN/2, *list, *r);
+        rc = cq_dlist_to_update_utf8(&con, columns, CQ_QLEN/2, *list, *r);
         if (rc) {
             rc = 101;
             break;
@@ -523,7 +523,7 @@ int cq_update(struct dbconn con, const char *table, const struct dlist *list)
             break;
         }
 
-        rc = safe_query(con, query);
+        rc = cq_query(&con, query);
         if (rc) {
             rc = 201;
             break;
@@ -562,7 +562,7 @@ int cq_select_query(struct dbconn con, struct dlist **out, const char *q)
         return 200;
     }
 
-    rc = safe_query(con, query);
+    rc = cq_query(&con, query);
     if (rc) {
         free(query);
         cq_close_connection(&con);
@@ -755,7 +755,7 @@ int cq_select_func_arr(struct dbconn con, const char *func, char * const *args,
     }
 
     if (0 != num_args) {
-        rc = cq_fields_to_utf8(fargs, CQ_QLEN, num_args, args, true);
+        rc = cq_fields_to_utf8(&con, fargs, CQ_QLEN, num_args, args, true);
         if (rc) {
             free(query);
             free(fargs);
@@ -804,7 +804,7 @@ int cq_get_primkey(struct dbconn con, const char *table, char *out,
         return 200;
     }
 
-    rc = safe_query(con, query);
+    rc = cq_query(&con, query);
     free(query);
     if (rc) {
         cq_close_connection(&con);
@@ -863,7 +863,7 @@ int cq_get_fields(struct dbconn con, const char *table, size_t *out_fieldc,
         return 200;
     }
 
-    rc = safe_query(con, query);
+    rc = cq_query(&con, query);
     free(query);
     if (rc)
         return 201;
@@ -915,7 +915,7 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
     }
 
     if (0 != num_args) {
-        rc = cq_fields_to_utf8(fargs, CQ_QLEN, num_args, args, true);
+        rc = cq_fields_to_utf8(&con, fargs, CQ_QLEN, num_args, args, true);
         if (rc) {
             free(query);
             free(fargs);
@@ -936,7 +936,7 @@ int cq_proc_arr(struct dbconn con, const char *proc, char * const *args,
         return 200;
     }
 
-    rc = safe_query(con, query);
+    rc = cq_query(&con, query);
     free(query);
 
     cq_close_connection(&con);

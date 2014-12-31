@@ -27,42 +27,13 @@
 extern size_t CQ_QLEN;
 extern size_t  CQ_FMAXLEN;
 
-int safe_query(struct dbconn con, const char *query)
+int cq_query(struct dbconn *con, const char *query)
 {
-    size_t len = strlen(query) * 2 + sizeof(char);
-    char *s = calloc(len, sizeof(char));
-    if (NULL == s)
-        return -1;
-
-    mysql_real_escape_string(con.con, s, query, len);
-
-    return mysql_query(con.con, s);
+    return mysql_query(con->con, query);
 }
 
-/*
-static int inject(char *dest, const char *insert, size_t n, size_t pos)
-{
-    size_t addl = strlen(insert), newpos = pos+addl;
-
-    if (strlen(dest) == n-addl)
-        return 3;
-
-    char *temp = calloc(n, sizeof(char));
-    if (NULL == temp)
-        return 4;
-
-    strncpy(temp, dest, pos);
-    strcpy(temp+pos, insert);
-    strcpy(temp+newpos, dest+pos);
-    strcpy(dest, temp);
-    free(temp);
-
-    return 0;
-}
-*/
-
-int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
-        char * const *fieldnames, bool usequotes)
+int cq_fields_to_utf8(struct dbconn *con, char *buf, size_t buflen,
+        size_t fieldc, char * const *fieldnames, bool usequotes)
 {
     int rc = 0;
     size_t num_left = fieldc, written = 0;
@@ -74,40 +45,39 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
     if (NULL == temp)
         return -1;
 
+    char *field = calloc((CQ_FMAXLEN+3)*2+1, sizeof(char));
+    if (NULL == field) {
+        free(temp);
+        return -2;
+    }
+
     /* prevent appending to buffer */
     buf[0] = '\0';
 
+    cq_connect(con);
     for (size_t i = 0; i < fieldc; ++i) {
         bool escaped = fieldnames[i][0] == '\\';
-        const char *field = escaped ? &fieldnames[i][1] : fieldnames[i];
+        const char *orig = escaped ? &fieldnames[i][1] : fieldnames[i];
+        const char *value;
 
         bool isstr = false;
-        if (!escaped && usequotes) {
-            for (size_t j = 0; j < strlen(field); ++j) {
-                if (!isdigit(field[j])) {
-                    isstr = true;
-                    break;
+        if (!escaped) {
+            mysql_real_escape_string(con->con, field, orig, strlen(orig));
+            value = field;
+            if (usequotes)
+                for (size_t j = 0; j < strlen(value); ++j) {
+                    if (!isdigit(value[j])) {
+                        isstr = true;
+                        break;
+                    }
                 }
-            }
+        } else {
+            value = orig;
         }
-
-/*
-        if (isstr) {
-            strcpy(temp, field);
-            for (size_t j = 0; j < strlen(temp); ++j) {
-                if (temp[j] == '\'')
-                    rc = inject(temp, "\\", CQ_FMAXLEN+3, j);
-                if (rc)
-                    break;
-            }
-        }
-        if (rc)
-            break;
-*/
 
         const char *a = isstr ? "'" : "";
         const char *c = --num_left > 0 ? "," : "";
-        written += snprintf(temp, CQ_FMAXLEN+3, "%s%s%s%s", a, field, a, c);
+        written += snprintf(temp, CQ_FMAXLEN+3, "%s%s%s%s", a, value, a, c);
         if (written >= buflen) {
             rc = 2;
             break;
@@ -115,13 +85,15 @@ int cq_fields_to_utf8(char *buf, size_t buflen, size_t fieldc,
 
         strcat(buf, temp);
     }
+    cq_close_connection(con);
 
+    free(field);
     free(temp);
     return rc;
 }
 
-int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
-        struct drow row)
+int cq_dlist_to_update_utf8(struct dbconn *con, char *buf, size_t buflen,
+        struct dlist list, struct drow row)
 {
     int rc = 0;
     size_t num_left = list.fieldc, written = 0;
@@ -133,6 +105,19 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
     if (NULL == temp)
         return -1;
 
+    char *tempf = calloc((CQ_FMAXLEN+3)*2+1, sizeof(char));
+    if (NULL == tempf) {
+        free(temp);
+        return -2;
+    }
+
+    char *tempv = calloc((CQ_FMAXLEN+3)*2+1, sizeof(char));
+    if (NULL == tempv) {
+        free(temp);
+        free(tempf);
+        return -3;
+    }
+
     /* prevent appending to buffer */
     buf[0] = '\0';
 
@@ -143,38 +128,31 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
         }
 
         bool v_escaped = row.values[i][0] == '\\';
-        const char *tempv = v_escaped ?
+        const char *v_orig = v_escaped ?
                 &row.values[i][1] : row.values[i];
+        const char *f = list.fieldnames[i], *v_value;
+
+        mysql_real_escape_string(con->con, tempf, f, strlen(f));
 
         bool isstr = false;
         if (!v_escaped) {
-            for (size_t j = 0; j < strlen(tempv); ++j) {
-                if (!isdigit(tempv[j])) {
+            mysql_real_escape_string(con->con, tempv, v_orig, strlen(v_orig));
+            v_value = tempv;
+            for (size_t j = 0; j < strlen(v_value); ++j) {
+                if (!isdigit(v_value[j])) {
                     isstr = true;
                     break;
                 }
             }
+        } else {
+            v_value = v_orig;
         }
-
-/*
-        if (isstr) {
-            strcpy(temp, tempv);
-            for (size_t j = 0; j < strlen(temp); ++j) {
-                if (temp[j] == '\'')
-                    rc = inject(temp, "\\", CQ_FMAXLEN+3, j);
-                if (rc)
-                    break;
-            }
-        }
-        if (rc)
-            break;
-*/
 
         const char *a = isstr ? "'" : "";
         const char *c = --num_left > 0 ? "," : "";
         written += snprintf(temp, CQ_FMAXLEN+3, "%s=%s%s%s%s",
-                list.fieldnames[i],
-                a, tempv, a, c);
+                tempf,
+                a, v_value, a, c);
         if (written >= buflen) {
             rc = 2;
             break;
@@ -183,19 +161,23 @@ int cq_dlist_to_update_utf8(char *buf, size_t buflen, struct dlist list,
         strcat(buf, temp);
     }
 
+    free(tempv);
+    free(tempf);
     free(temp);
     return rc;
 }
 
-int cq_dlist_fields_to_utf8(char *buf, size_t buflen, struct dlist list)
+int cq_dlist_fields_to_utf8(struct dbconn *con, char *buf, size_t buflen,
+        struct dlist list)
 {
-    return cq_fields_to_utf8(buf, buflen, list.fieldc, list.fieldnames,
+    return cq_fields_to_utf8(con, buf, buflen, list.fieldc, list.fieldnames,
             false);
 }
 
-int cq_drow_to_utf8(char *buf, size_t buflen, struct drow row)
+int cq_drow_to_utf8(struct dbconn *con, char *buf, size_t buflen,
+        struct drow row)
 {
-    return cq_fields_to_utf8(buf, buflen, row.fieldc, row.values,
+    return cq_fields_to_utf8(con, buf, buflen, row.fieldc, row.values,
             true);
 }
 

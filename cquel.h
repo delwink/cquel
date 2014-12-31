@@ -34,7 +34,7 @@
 /**
  * @brief The cquel software version number.
  */
-#define CQ_VERSION   "4.2"
+#define CQ_VERSION   "4.3"
 
 /**
  * @brief Information about the cquel copyright holders and license.
