@@ -1,3 +1,13 @@
+WARNING
+=======
+
+This software has been deprecated by Delwink Software in favor of its
+replacement library, [libsqon](http://delwink.com/software/libsqon.html).
+
+Do NOT use this library in a production environment; it has been abandoned.
+
+Below is the original text from this README.
+
 cquel
 =====
 
